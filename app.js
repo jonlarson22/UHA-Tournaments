@@ -37,3 +37,20 @@ function renderPlayerCheckboxes(players) {
         playerListDiv.appendChild(item);
     });
 }
+
+import { TournamentEngine } from './bracket-engine.js';
+const engine = new TournamentEngine(db);
+
+document.getElementById('btn-start').addEventListener('click', () => {
+    const selected = Array.from(document.querySelectorAll('#player-list input:checked')).map(cb => ({
+        id: cb.value,
+        name: cb.dataset.name,
+        elo: parseInt(cb.dataset.elo)
+    }));
+
+    if (selected.length < 2) return alert("Select more players!");
+
+    engine.createRoundRobin("Group Stage", selected).then(stage => {
+        console.log("Ready to render UI");
+    });
+});
