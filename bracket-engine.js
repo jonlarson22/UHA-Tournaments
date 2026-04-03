@@ -73,3 +73,27 @@ export class TournamentEngine {
         }
         return { winnerPoints: (wGames === 1 ? 1 : 0), loserPoints: 2 };
     }
+
+        function processUHAStats(gameData) {
+
+            let setsA = 0;
+            let setsB = 0;
+        
+            gameData.forEach(game => {
+                if (game.a > game.b) setsA++;
+                else if (game.b > game.a) setsB++;
+            });
+        
+            let pointsA = 0;
+            let pointsB = 0;
+        
+            if (setsA > setsB) {
+                pointsA = 2;
+                pointsB = (setsB === 1) ? 1 : 0;
+            } else {
+                pointsB = 2;
+                pointsA = (setsA === 1) ? 1 : 0;
+            }
+        
+            return { pointsA, pointsB, scoreString: `${setsA}-${setsB}` };
+        }
