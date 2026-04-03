@@ -2,25 +2,36 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
-   apiKey: "AIzaSyCCV_WHA1Q7WKawfG68Y9z40xINVg5zbmw",
-   authDomain: "utah-handball.firebaseapp.com",
-   databaseURL: "https://utah-handball-default-rtdb.firebaseio.com",
-   projectId: "utah-handball",
-   storageBucket: "utah-handball.firebasestorage.app",
-   messagingSenderId: "4109545863",
-   appId: "1:4109545863:web:6a6de7f532be0bc20f2322"
+  apiKey: "AIzaSyCCV_WHA1Q7WKawfG68Y9z40xINVg5zbmw",
+  authDomain: "utah-handball.firebaseapp.com",
+  databaseURL: "https://utah-handball-default-rtdb.firebaseio.com",
+  projectId: "utah-handball",
+  storageBucket: "utah-handball.firebasestorage.app",
+  messagingSenderId: "4109545863",
+  appId: "1:4109545863:web:6a6de7f532be0bc20f2322"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
 
-const playerListDiv = document.getElementById('player-list');
+db.ref('players').on('value', (snapshot) => {
+    const players = snapshot.val() || [];
+    const playerListDiv = document.getElementById('player-list');
+    playerListDiv.innerHTML = '';
 
-onValue(ref(db, 'players'), (snapshot) => {
-    const players = snapshot.val();
-    document.getElementById('connection-status').innerText = "Connected to UHA DB";
-    renderPlayerCheckboxes(players);
+    players.filter(p => p.active).sort((a, b) => b.singles - a.singles).forEach(player => {
+        const div = document.createElement('div');
+        div.className = 'player-item';
+        div.dataset.id = player.id;
+        div.dataset.name = player.name;
+        div.dataset.elo = player.singles;
+        div.innerText = `${player.name} (${Math.round(player.singles)})`;
+        playerListDiv.appendChild(div);
+    });
 });
+
 
 function renderPlayerCheckboxes(players) {
     playerListDiv.innerHTML = '';
