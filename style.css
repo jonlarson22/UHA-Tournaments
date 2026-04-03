@@ -1,0 +1,29 @@
+:root {
+    --bg-dark: #121212;
+    --panel-dark: #1e1e1e;
+    --uha-blue: #3498db;
+    --uha-gold: #f1c40f;
+    --text: #ffffff;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text);
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+#setup-container {
+    width: 300px;
+    background: var(--panel-dark);
+    padding: 20px;
+    border-right: 2px solid var(--uha-blue);
+}
+
+.player-item {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
