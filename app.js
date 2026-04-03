@@ -260,7 +260,7 @@ document.getElementById('btn-start').addEventListener('click', () => {
     }
 
     document.getElementById('matchup-container').innerHTML = matchesHtml;
-    document.getElementById('setup-container').style.display = 'none';
+    document.getElementById('admin-dashboard').style.display = 'none';
     document.getElementById('tournament-view').style.display = 'block';
 });
 
