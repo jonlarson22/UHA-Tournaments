@@ -14,19 +14,33 @@
     </header>
 
     <main>
-        <section id="setup-container">
-            <h2>1. Select Players</h2>
-            <input type="text" id="player-search" placeholder="Search UHA Roster...">
-            <div id="player-list">
-                </div>
-            
-            <h2>2. Tournament Config</h2>
+            <section id="setup-container">
+        <h2>1. Select & Pair Players</h2>
+        <div class="setup-columns">
+            <div class="column">
+                <h3>UHA Roster</h3>
+                <input type="text" id="player-search" placeholder="Search...">
+                <div id="player-list" class="drop-zone"></div>
+            </div>
+    
+            <div class="column">
+                <h3>Tournament Teams</h3>
+                <div id="team-draft-area" class="drop-zone">
+                    </div>
+                <button id="add-team-btn">+ New Team</button>
+            </div>
+        </div>
+        
+        <h2>2. Config</h2>
+        <div class="config-row">
+            <label>Format:</label>
             <select id="tourney-type">
-                <option value="singles">Singles</option>
-                <option value="doubles">Doubles (Ad-Hoc)</option>
+                <option value="round_robin">Round Robin ➔ Bracket</option>
+                <option value="single_elim">Single Elimination</option>
             </select>
-            <button id="btn-start">Generate Tournament</button>
-        </section>
+        </div>
+        <button id="btn-start" class="primary-btn">Launch Tournament</button>
+    </section>
 
         <section id="tournament-view">
             <div id="brackets-container" class="brackets-viewer"></div>
