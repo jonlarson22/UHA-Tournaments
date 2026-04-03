@@ -54,3 +54,64 @@ document.getElementById('btn-start').addEventListener('click', () => {
         console.log("Ready to render UI");
     });
 });
+
+let selectedPlayers = [];
+let teams = [];
+
+document.getElementById('add-team-btn').addEventListener('click', () => {
+    const teamId = Date.now();
+    const teamDiv = document.createElement('div');
+    teamDiv.className = 'team-slot';
+    teamDiv.id = `team-${teamId}`;
+    teamDiv.innerHTML = `
+        <div class="team-header">Team <span class="team-elo">0</span> ELO</div>
+        <div class="slots" data-team-id="${teamId}"></div>
+    `;
+    document.getElementById('team-draft-area').appendChild(teamDiv);
+});
+
+playerListDiv.addEventListener('click', (e) => {
+    const playerItem = e.target.closest('.player-item');
+    if (!playerItem) return;
+
+    const openSlot = document.querySelector('.team-slot:last-child .slots');
+    if (openSlot && openSlot.children.length < 2) {
+        openSlot.appendChild(playerItem);
+        updateTeamElo(openSlot.closest('.team-slot'));
+    } else {
+        alert("Create a new team slot first (Max 2 players per team)!");
+    }
+});
+
+function updateTeamElo(teamDiv) {
+    const players = teamDiv.querySelectorAll('.player-item');
+    let totalElo = 0;
+    players.forEach(p => totalElo += parseInt(p.dataset.elo));
+ 
+    const avgElo = players.length > 0 ? Math.round(totalElo / players.length) : 0;
+    teamDiv.querySelector('.team-elo').innerText = avgElo;
+    teamDiv.dataset.finalElo = avgElo;
+}
+
+import { BracketsViewer } from 'https://cdn.jsdelivr.net/npm/brackets-viewer@latest/dist/brackets-viewer.min.js';
+
+const viewer = new BracketsViewer();
+
+document.getElementById('btn-start').addEventListener('click', async () => {
+    const teamElements = document.querySelectorAll('.team-slot');
+    const participants = Array.from(teamElements).map(t => ({
+        name: Array.from(t.querySelectorAll('.player-item')).map(p => p.dataset.name).join(' / '),
+        elo: parseInt(t.dataset.finalElo)
+    }));
+
+    const tourneyData = await engine.createRoundRobin("Qualifying Groups", participants);
+    
+    document.getElementById('setup-container').style.display = 'none';
+    document.getElementById('tournament-view').style.display = 'block';
+
+    viewer.render({
+        stages: [tourneyData.stage],
+        matches: tourneyData.matches,
+        participants: tourneyData.participants
+    });
+});
