@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>UHA Tournament</title>
+    <title>UHA Tournament Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/brackets-viewer@latest/dist/brackets-viewer.min.css" />
 </head>
 <body>
 
@@ -23,8 +22,8 @@
                 <div class="section-title">1. Tournament Mode</div>
                 
                 <div class="mode-toggle">
-                    <button class="mode-btn" id="btn-mode-singles">Singles</button>
-                    <button class="mode-btn active" id="btn-mode-doubles">Doubles</button>
+                    <button class="mode-btn active" id="btn-mode-singles">Singles</button>
+                    <button class="mode-btn" id="btn-mode-doubles">Doubles</button>
                 </div>
 
                 <div class="section-title">2. Draft Participants</div>
@@ -36,21 +35,18 @@
 
                     <div class="column">
                         <div id="team-draft-area"></div>
-                        <button id="add-team-btn" class="uha-btn-outline">+ Add Empty Team Slot</button>
                     </div>
                 </div>
                 
                 <div class="divider"></div>
                 <div class="section-title">3. Finalize Config</div>
-                <select id="tourney-type">
-                    <option value="round_robin">Round Robin ➔ Bracket</option>
-                    <option value="single_elim">Single Elimination</option>
-                </select>
                 <button id="btn-start" class="uha-btn">Launch Tournament</button>
             </section>
 
             <section id="tournament-view" style="display:none;">
-                <div id="brackets-container" class="brackets-viewer"></div>
+                <div class="section-title" id="tourney-title">Round Robin Matchups</div>
+                <div id="matchup-container"></div>
+                <button onclick="location.reload()" class="uha-btn-outline" style="margin-top:20px;">End Tournament</button>
             </section>
         </main>
     </div>
@@ -58,9 +54,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/brackets-viewer@latest/dist/brackets-viewer.min.js"></script>
     
-    <script src="bracket-engine.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
