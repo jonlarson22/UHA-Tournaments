@@ -214,3 +214,24 @@ input[type="text"], select {
 .match-card:hover { border-color: var(--uha-blue); }
 .match-team { font-weight: bold; font-size: 16px; }
 .match-vs { color: var(--text-muted); font-size: 12px; margin: 0 15px; }
+
+#player-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#locked-divisions-list div {
+    background: rgba(52, 152, 219, 0.1);
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    border-left: 3px solid var(--uha-blue);
+}
+
+#player-list::-webkit-scrollbar {
+    width: 5px;
+}
+#player-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+}
