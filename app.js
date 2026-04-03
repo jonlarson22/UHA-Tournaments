@@ -161,23 +161,48 @@ document.getElementById('btn-start').addEventListener('click', () => {
 
     if (participants.length < 2) return alert("You need at least 2 participants!");
 
+    const format = document.getElementById('tourney-type').value;
     let matchesHtml = '';
-    let matchCounter = 1;
-    
-    for (let i = 0; i < participants.length; i++) {
-        for (let j = i + 1; j < participants.length; j++) {
-            matchesHtml += `
-                <div class="match-card" onclick="alert('Score Modal Coming Soon!')">
-                    <div>
-                        <div style="font-size:10px; color:#888;">Match ${matchCounter}</div>
-                        <span class="match-team">${participants[i].name}</span>
-                        <span class="match-vs">vs</span>
-                        <span class="match-team">${participants[j].name}</span>
-                    </div>
-                    <button class="uha-btn" style="width:auto; padding:8px 15px;">Enter Score</button>
-                </div>
-            `;
-            matchCounter++;
+
+    if (format === 'round_robin') {
+        document.getElementById('tourney-title').innerText = "Round Robin Group Stage";
+
+        const groupCount = Math.ceil(participants.length / 4);
+        const groups = Array.from({ length: groupCount }, () => []);
+        
+        let forward = true;
+        let groupIndex = 0;
+        
+        participants.forEach((p) => {
+            groups[groupIndex].push(p);
+            if (forward) {
+                groupIndex++;
+                if (groupIndex >= groupCount) { groupIndex--; forward = false; }
+            } else {
+                groupIndex--;
+                if (groupIndex < 0) { groupIndex++; forward = true; }
+            }
+        });
+
+        groups.forEach((group, gIndex) => {
+            matchesHtml += `<div class="group-header" style="background:#333; padding:10px; margin-top:20px; font-weight:bold; color:var(--uha-gold);">Group ${String.fromCharCode(65 + gIndex)}</div>`;
+            for (let i = 0; i < group.length; i++) {
+                for (let j = i + 1; j < group.length; j++) {
+                    matchesHtml += createMatchCard(group[i].name, group[j].name);
+                }
+            }
+        });
+
+    } else if (format === 'single_elim') {
+        document.getElementById('tourney-title').innerText = "Single Elimination - Round 1";
+        let p = [...participants];
+        while (p.length > 1) {
+            let highSeed = p.shift();
+            let lowSeed = p.pop();
+            matchesHtml += createMatchCard(highSeed.name, lowSeed.name);
+        }
+        if (p.length === 1) {
+            matchesHtml += `<div style="padding:10px; color:var(--uha-blue);">** ${p[0].name} gets a Bye **</div>`;
         }
     }
 
@@ -185,5 +210,41 @@ document.getElementById('btn-start').addEventListener('click', () => {
     document.getElementById('setup-container').style.display = 'none';
     document.getElementById('tournament-view').style.display = 'block';
 });
+
+function createMatchCard(teamA, teamB) {
+    return `
+        <div class="match-card" style="display:flex; justify-content:space-between; align-items:center; background:#1a1a1a; padding:15px; margin-top:10px; border:1px solid #333; border-radius:6px;">
+            <div style="flex:1;">
+                <div class="team-a" style="font-weight:bold;">${teamA} <span class="score-a" style="color:var(--uha-blue); margin-left:10px;"></span></div>
+                <div style="font-size:11px; color:#666; margin:5px 0;">vs</div>
+                <div class="team-b" style="font-weight:bold;">${teamB} <span class="score-b" style="color:var(--uha-blue); margin-left:10px;"></span></div>
+            </div>
+            <button class="uha-btn mock-score-btn" style="width:auto; padding:8px 15px;" onclick="mockScore(this)">Enter Score</button>
+        </div>
+    `;
+}
+
+window.mockScore = function(btnElement) {
+    const card = btnElement.closest('.match-card');
+    const teamA = card.querySelector('.team-a').innerText;
+    const teamB = card.querySelector('.team-b').innerText;
+
+    const scoreStr = prompt(`Enter games won for ${teamA} vs ${teamB} (e.g., 2-1 or 2-0):`);
+    
+    if (scoreStr && scoreStr.includes('-')) {
+        const scores = scoreStr.split('-');
+        card.querySelector('.score-a').innerText = `[${scores[0]}]`;
+        card.querySelector('.score-b').innerText = `[${scores[1]}]`;
+
+        if (parseInt(scores[0]) > parseInt(scores[1])) {
+            card.style.borderColor = 'var(--green-win)';
+        } else {
+            card.style.borderColor = 'var(--red-lose)';
+        }
+        
+        btnElement.innerText = "Edit Score";
+        btnElement.style.background = "#555";
+    }
+};
 
 refreshRosterFromDB();
