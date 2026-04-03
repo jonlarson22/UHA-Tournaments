@@ -1,3 +1,42 @@
+let isAdmin = false;
+
+function adminLogin(email, password) {
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then((userCredential) => {
+        isAdmin = true;
+        document.body.classList.add('admin-mode'); 
+        showToast("Admin Verified!");
+        refreshRosterFromDB(); 
+      })
+      .catch((error) => {
+        alert("Access Denied: " + error.message);
+      });
+}
+
+function checkAdmin() {
+    if (isAdmin) {
+        firebase.auth().signOut();
+        isAdmin = false;
+        document.body.classList.remove('admin-mode');
+        showToast("Logged out.");
+        refreshRosterFromDB();
+        return;
+    }
+    const email = prompt("Admin Email:");
+    const pass = prompt("Admin Password:");
+    if (email && pass) adminLogin(email, pass);
+}
+
+function refreshRosterFromDB() {
+    db.ref('players').once('value', (snapshot) => {
+        const players = snapshot.val() || [];
+        renderRoster(players);
+        document.getElementById('connection-status').innerText = "Realtime Connected ✅";
+    });
+}
+
+refreshRosterFromDB();
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
@@ -23,23 +62,27 @@ import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10
   });
   
   function renderRoster(players) {
-      playerListDiv.innerHTML = '';
-      const isDoubles = document.getElementById('tourney-type').value.includes('doubles');
+    const playerListDiv = document.getElementById('player-list');
+    playerListDiv.innerHTML = '';
+    
+    const isDoubles = document.getElementById('tourney-type').value.includes('doubles');
+    
+    players.filter(p => p.active).sort((a, b) => {
+        const ratingA = isDoubles ? (a.doubles || 1000) : (a.singles || 1000);
+        const ratingB = isDoubles ? (b.doubles || 1000) : (b.singles || 1000);
+        return ratingB - ratingA;
+    }).forEach(player => {
+        const div = document.createElement('div');
+        div.className = 'player-item';
+        div.dataset.id = player.id;
+        div.dataset.name = player.name;
 
-      players.filter(p => p.active).sort((a, b) => {
-          const ratingA = isDoubles ? a.doubles : a.singles;
-          const ratingB = isDoubles ? b.doubles : b.singles;
-          return ratingB - ratingA;
-      }).forEach(player => {
-          const div = document.createElement('div');
-          div.className = 'player-item';
-          div.dataset.id = player.id;
-          div.dataset.name = player.name;
-          div.dataset.elo = isDoubles ? player.doubles : player.singles;
-          div.innerText = `${player.name} (${Math.round(div.dataset.elo)})`;
-          playerListDiv.appendChild(div);
-      });
-  }
+        div.dataset.elo = isDoubles ? (player.doubles || 1000) : (player.singles || 1000);
+        
+        div.innerText = `${player.name} (${Math.round(div.dataset.elo)})`;
+        playerListDiv.appendChild(div);
+    });
+}
 
   document.getElementById('add-team-btn').addEventListener('click', () => {
       const teamId = Date.now();
@@ -63,6 +106,24 @@ import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10
       }
   });
   
+  function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    toast.innerText = message;
+    toast.style.background = isError ? "#e74c3c" : "#2ecc71";
+    
+    toast.style.display = "block";
+    setTimeout(() => { 
+        toast.style.opacity = "1"; 
+        toast.style.top = "20px";
+    }, 10);
+
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.top = "-50px";
+        setTimeout(() => { toast.style.display = "none"; }, 300);
+    }, 3000);
+}
+
   function updateTeamElo(teamDiv) {
       const players = teamDiv.querySelectorAll('.player-item');
       let totalElo = 0;
