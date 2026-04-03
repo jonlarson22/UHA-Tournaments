@@ -8,77 +8,68 @@
 </head>
 <body class="uha-dark-theme">
 
-        <div id="toast" style="
-            display: none; 
-            opacity: 0;
-            transition: opacity 0.3s, top 0.3s;
-            position: fixed; 
-            top: -50px;
-            left: 50%; 
-            transform: translateX(-50%); 
-            background: #2ecc71; 
-            color: white; 
-            padding: 12px 24px; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
-            z-index: 10000; 
-            font-weight: bold;
-        "></div>
-	    
+    <div id="toast" style="display: none; opacity: 0; transition: opacity 0.3s, top 0.3s; position: fixed; top: -50px; left: 50%; transform: translateX(-50%); background: #2ecc71; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10000; font-weight: bold;"></div>
+    
     <header>
         <h1>UHA Tournament Dashboard</h1>
         <div id="connection-status">Connecting to Firebase...</div>
     </header>
 
     <main>
-            <section id="setup-container">
-        <h2>1. Select & Pair Players</h2>
-        <div class="setup-columns">
-            <div class="column">
-                <h3>UHA Roster</h3>
-                <input type="text" id="player-search" placeholder="Search...">
-                <div id="player-list" class="drop-zone"></div>
-            </div>
-    
-            <div class="column">
-                <h3>Tournament Teams</h3>
-                <div id="team-draft-area" class="drop-zone">
-                    </div>
-                <button id="add-team-btn">+ New Team</button>
-            </div>
-        </div>
-        
-        <h2>2. Config</h2>
-        <div class="config-row">
-            <label>Format:</label>
-            <select id="tourney-type">
-                <option value="round_robin">Round Robin ➔ Bracket</option>
-                <option value="single_elim">Single Elimination</option>
-            </select>
-        </div>
-        <button id="btn-start" class="primary-btn">Launch Tournament</button>
-    </section>
+        <section id="setup-container">
+            <h2>1. Select & Pair Players</h2>
+            <div class="setup-columns">
+                <div class="column">
+                    <h3>UHA Roster</h3>
+                    <input type="text" id="player-search" placeholder="Search...">
+                    <div id="player-list" class="drop-zone"></div>
+                </div>
 
-        <section id="tournament-view">
+                <div class="column">
+                    <h3>Tournament Teams</h3>
+                    <div id="team-draft-area" class="drop-zone"></div>
+                    <button id="add-team-btn">+ New Team</button>
+                    <button id="clear-teams-btn" style="background: #e74c3c; margin-left: 10px;">Clear Teams</button>
+                </div>
+            </div>
+            
+            <h2>2. Config</h2>
+            <div class="config-row">
+                <label>Mode:</label>
+                <select id="mode-type">
+                    <option value="doubles">Doubles (Ad-Hoc)</option>
+                    <option value="singles">Singles</option>
+                </select>
+            </div>
+            <div class="config-row">
+                <label>Format:</label>
+                <select id="tourney-type">
+                    <option value="round_robin">Round Robin ➔ Bracket</option>
+                    <option value="single_elim">Single Elimination</option>
+                </select>
+            </div>
+            <button id="btn-start" class="primary-btn">Launch Tournament</button>
+        </section>
+
+        <section id="tournament-view" style="display:none;">
             <div id="brackets-container" class="brackets-viewer"></div>
         </section>
 
-        <div id="score-modal" class="modal" style="display:none;">
-    <div class="modal-content">
-        <h3>Match Score</h3>
-        <div class="score-row">
-            <span id="team-a-name">Team A</span>
-            <input type="number" id="g1-a"> <input type="number" id="g2-a"> <input type="number" id="g3-a">
+        <div id="score-modal" class="modal" style="display:none; position:fixed; top:20%; left:50%; transform:translate(-50%, 0); background:#252525; padding:20px; border:2px solid #3498db; z-index:1000;">
+            <div class="modal-content">
+                <h3>Match Score</h3>
+                <div class="score-row">
+                    <span id="team-a-name" style="display:inline-block; width:150px;">Team A</span>
+                    <input type="number" id="g1-a" style="width:40px;"> <input type="number" id="g2-a" style="width:40px;"> <input type="number" id="g3-a" style="width:40px;">
+                </div>
+                <div class="score-row" style="margin-top:10px; margin-bottom: 20px;">
+                    <span id="team-b-name" style="display:inline-block; width:150px;">Team B</span>
+                    <input type="number" id="g1-b" style="width:40px;"> <input type="number" id="g2-b" style="width:40px;"> <input type="number" id="g3-b" style="width:40px;">
+                </div>
+                <button id="save-score-btn" style="background:#2ecc71; padding:8px 16px; cursor:pointer;">Save to Pending</button>
+                <button onclick="document.getElementById('score-modal').style.display='none'" style="background:#e74c3c; padding:8px 16px; cursor:pointer;">Cancel</button>
+            </div>
         </div>
-        <div class="score-row">
-            <span id="team-b-name">Team B</span>
-            <input type="number" id="g1-b"> <input type="number" id="g2-b"> <input type="number" id="g3-b">
-        </div>
-        <button id="save-score-btn">Save to Pending</button>
-        <button onclick="document.getElementById('score-modal').style.display='none'">Cancel</button>
-    </div>
-</div>
-    
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
