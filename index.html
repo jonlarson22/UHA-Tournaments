@@ -37,13 +37,13 @@
                     <button id="btn-add-wildcard" class="uha-btn" style="width: auto; padding: 10px;">+ Add</button>
                 </div>
 
-                <div class="section-title" style="margin-top: 30px;">2. Lock Division</div>
+                <div class="section-title" style="margin-top: 30px;">2. Division</div>
                 <input type="text" id="division-name" placeholder="e.g. Open, A, B..." value="Open Division">
                 <select id="tourney-type">
-                    <option value="round_robin">Round Robin</option>
                     <option value="single_elim">Knockout Bracket</option>
+                    <option value="round_robin">Round Robin</option>
                 </select>
-                <button id="btn-lock-division" class="uha-btn uha-btn-gold">Lock Current Division</button>
+                <button id="btn-lock-division" class="uha-btn uha-btn-gold">Lock Division</button>
                 
                 <div id="locked-divisions-list" style="margin-top: 15px; font-size: 14px; color: var(--uha-blue);"></div>
 
@@ -51,13 +51,13 @@
             </div>
 
             <div class="column">
-                <div class="section-title">Roster</div>
-                <input type="text" id="player-search" placeholder="Search roster...">
+                <div class="section-title">Players</div>
+                <input type="text" id="player-search" placeholder="Search players...">
                 <div id="player-list"></div>
             </div>
 
             <div class="column">
-                <div class="section-title">Drafted Teams</div>
+                <div class="section-title" id="draft-header">Selected Players</div>
                 <div id="team-draft-area"></div>
             </div>
 
