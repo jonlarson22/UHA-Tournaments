@@ -1,4 +1,4 @@
-// --- FIREBASE CONFIG (Kept exactly as provided) ---
+// --- FIREBASE CONFIG ---
 const firebaseConfig = {
     apiKey: "AIzaSyCCV_WHA1Q7WKawfG68Y9z40xINVg5zbmw",
     authDomain: "utah-handball.firebaseapp.com",
@@ -15,226 +15,305 @@ const db = firebase.database();
 // --- STATE MANAGEMENT ---
 let allPlayers = []; 
 let isDoublesMode = false;
+let isAdmin = true;
 let lockedDivisions = [];
-let currentBracket = null;
 
-// --- INITIALIZATION ---
-function init() {
-    refreshRosterFromDB();
-    setupListeners();
-    updateUIForMode();
+// Ensure panels display correctly based on Admin state
+if (isAdmin) {
+    document.getElementById('admin-dashboard').style.display = 'block';
+    document.getElementById('public-viewer').style.display = 'none';
+} else {
+    document.getElementById('admin-dashboard').style.display = 'none';
+    document.getElementById('public-viewer').style.display = 'block';
 }
 
-// --- DATABASE SYNC ---
+const teamDraftArea = document.getElementById('team-draft-area');
+const playerListDiv = document.getElementById('player-list');
+const searchInput = document.getElementById('player-search');
+
+// --- TOGGLES ---
+document.getElementById('btn-mode-singles').addEventListener('click', (e) => {
+    isDoublesMode = false;
+    e.target.classList.add('active');
+    document.getElementById('btn-mode-doubles').classList.remove('active');
+    teamDraftArea.innerHTML = ''; 
+    renderRoster();
+});
+
+document.getElementById('btn-mode-doubles').addEventListener('click', (e) => {
+    isDoublesMode = true;
+    e.target.classList.add('active');
+    document.getElementById('btn-mode-singles').classList.remove('active');
+    teamDraftArea.innerHTML = ''; 
+    renderRoster();
+});
+
+// --- ROSTER LOGIC ---
 function refreshRosterFromDB() {
-    db.ref('players').on('value', (snapshot) => {
-        allPlayers = Object.values(snapshot.val() || {});
+    db.ref('players').once('value', (snapshot) => {
+        allPlayers = snapshot.val() || [];
         renderRoster();
-        const status = document.getElementById('connection-status');
-        if (status) status.innerText = "Realtime Connected ✅";
+        const connStatus = document.getElementById('connection-status');
+        if(connStatus) connStatus.innerText = "Realtime Connected ✅";
     });
 }
 
-// --- 2 & 3: DYNAMIC LABELS ---
-function updateUIForMode() {
-    const draftHeader = document.getElementById('draft-header');
-    const lockBtn = document.getElementById('btn-lock');
-    
-    // Point 1: Change "Lock Division" to "Division"
-    if (lockBtn) lockBtn.innerText = "Division";
-    
-    // Point 3: Toggle "Selected Players" vs "Teams"
-    if (draftHeader) {
-        draftHeader.innerText = isDoublesMode ? "Teams" : "Selected Players";
-    }
-    renderRoster();
+searchInput.addEventListener('input', renderRoster);
+
+function getDraftedPlayerIds() {
+    const draftedElements = Array.from(teamDraftArea.querySelectorAll('.drafted-id'));
+    return draftedElements.map(p => p.dataset.id);
 }
 
-// --- ROSTER LOGIC ---
 function renderRoster() {
-    const list = document.getElementById('player-list');
-    const search = document.getElementById('player-search').value.toLowerCase();
-    if (!list) return;
+    playerListDiv.innerHTML = '';
+    const draftedIds = getDraftedPlayerIds();
+    const searchTerm = searchInput.value.toLowerCase();
 
-    list.innerHTML = '';
+    let availablePlayers = allPlayers.filter(p => 
+        p.active && 
+        !draftedIds.includes(String(p.id)) &&
+        p.name.toLowerCase().includes(searchTerm)
+    );
     
-    let filtered = allPlayers.filter(p => p.active && p.name.toLowerCase().includes(search));
-    
-    filtered.sort((a, b) => {
+    availablePlayers.sort((a, b) => {
         const ratingA = isDoublesMode ? (a.doubles || 1000) : (a.singles || 1000);
         const ratingB = isDoublesMode ? (b.doubles || 1000) : (b.singles || 1000);
         return ratingB - ratingA;
     });
 
-    filtered.forEach(player => {
+    availablePlayers.forEach(player => {
         const div = document.createElement('div');
         div.className = 'player-item';
-        div.style = "cursor:pointer; padding:8px; border-bottom:1px solid #333; display:flex; justify-content:space-between;";
-        const rating = Math.round(isDoublesMode ? (player.doubles || 1000) : (player.singles || 1000));
-        div.innerHTML = `<span>${player.name}</span> <span style="color:#3498db;">${rating}</span>`;
-        div.onclick = () => addToDraft(player);
-        list.appendChild(div);
+        div.dataset.id = player.id;
+        div.dataset.name = player.name;
+        div.dataset.elo = isDoublesMode ? (player.doubles || 1000) : (player.singles || 1000);
+        div.innerHTML = `<span>${player.name}</span> <span style="color:var(--uha-blue); font-weight:bold;">${Math.round(div.dataset.elo)}</span>`;
+        playerListDiv.appendChild(div);
     });
 }
 
-function addToDraft(player) {
-    const area = document.getElementById('team-draft-area');
-    const div = document.createElement('div');
-    div.className = 'draft-entry';
-    div.dataset.name = player.name;
-    div.dataset.elo = isDoublesMode ? (player.doubles || 1000) : (player.singles || 1000);
-    div.style = "background:#222; margin-bottom:5px; padding:10px; border-radius:4px; display:flex; justify-content:space-between;";
-    div.innerHTML = `<span>${player.name}</span> <span onclick="this.parentElement.remove()" style="color:red; cursor:pointer;">X</span>`;
-    area.appendChild(div);
+// --- DRAFT LOGIC ---
+playerListDiv.addEventListener('click', (e) => {
+    const playerItem = e.target.closest('.player-item');
+    if (!playerItem) return;
+
+    if (!isDoublesMode) {
+        // Singles Draft
+        const singlesDiv = document.createElement('div');
+        singlesDiv.className = 'singles-slot';
+        singlesDiv.dataset.finalName = playerItem.dataset.name;
+        singlesDiv.dataset.finalElo = playerItem.dataset.elo;
+        
+        singlesDiv.innerHTML = `
+            <div style="font-weight: bold;">
+                ${playerItem.dataset.name} <span style="color:var(--uha-blue); margin-left:10px;">${Math.round(playerItem.dataset.elo)}</span>
+            </div>
+            <div class="drafted-id" data-id="${playerItem.dataset.id}" style="display:none;"></div>
+            <button class="remove-team-btn">X</button>
+        `;
+        teamDraftArea.appendChild(singlesDiv);
+
+    } else {
+        // Doubles Draft (Auto-pairing)
+        let openSlot = document.querySelector('.team-slot:last-child .slots');
+
+        if (!openSlot || openSlot.children.length >= 2) {
+            const teamId = Date.now();
+            const teamDiv = document.createElement('div');
+            teamDiv.className = 'team-slot';
+            teamDiv.innerHTML = `
+                <div class="team-header">
+                    <span>Team ELO: <span class="team-elo">0</span></span>
+                    <button class="remove-team-btn">X</button>
+                </div>
+                <div class="slots" data-team-id="${teamId}"></div>
+            `;
+            teamDraftArea.appendChild(teamDiv);
+            openSlot = teamDiv.querySelector('.slots');
+        }
+
+        const clone = document.createElement('div');
+        clone.className = 'drafted-id player-item';
+        clone.dataset.id = playerItem.dataset.id;
+        clone.dataset.name = playerItem.dataset.name;
+        clone.dataset.elo = playerItem.dataset.elo;
+        clone.innerHTML = playerItem.innerHTML;
+        clone.style.marginBottom = "5px";
+        
+        openSlot.appendChild(clone);
+        updateTeamElo(openSlot.closest('.team-slot'));
+    }
+    renderRoster();
+});
+
+// Remove Drafted Teams
+teamDraftArea.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-team-btn')) {
+        const slot = e.target.closest('.singles-slot') || e.target.closest('.team-slot');
+        slot.remove();
+        renderRoster(); 
+    }
+});
+
+// Update ELO for Teams
+function updateTeamElo(teamDiv) {
+    const players = teamDiv.querySelectorAll('.drafted-id');
+    let totalElo = 0;
+    let names = [];
+    players.forEach(p => {
+        totalElo += parseFloat(p.dataset.elo);
+        names.push(p.dataset.name);
+    });
+    const avgElo = players.length > 0 ? Math.round(totalElo / players.length) : 0;
+    teamDiv.querySelector('.team-elo').innerText = avgElo;
+    
+    teamDiv.dataset.finalName = names.join(' & ');
+    teamDiv.dataset.finalElo = avgElo;
 }
 
-// --- 4: UNLOCK LOGIC ---
-document.getElementById('btn-lock').addEventListener('click', () => {
-    const entries = document.querySelectorAll('.draft-entry');
-    if (entries.length < 2) return alert("Select at least 2 participants.");
+// --- WILDCARD LOGIC ---
+document.getElementById('btn-add-wildcard').addEventListener('click', () => {
+    const nameStr = document.getElementById('wildcard-name').value;
+    const eloVal = document.getElementById('wildcard-elo').value;
+    
+    if (!nameStr) return alert("Enter a wildcard name");
 
+    const fakePlayerItem = document.createElement('div');
+    fakePlayerItem.className = 'player-item';
+    fakePlayerItem.dataset.id = 'wildcard_' + Date.now();
+    fakePlayerItem.dataset.name = nameStr + " (WC)";
+    fakePlayerItem.dataset.elo = eloVal || 1000;
+
+    playerListDiv.appendChild(fakePlayerItem);
+    fakePlayerItem.click(); 
+
+    document.getElementById('wildcard-name').value = '';
+});
+
+// --- LOCKING LOGIC ---
+document.getElementById('btn-lock-division').addEventListener('click', () => {
     const divName = document.getElementById('division-name').value;
     const format = document.getElementById('tourney-type').value;
     
-    const participants = Array.from(entries).map(e => ({ name: e.dataset.name, elo: parseInt(e.dataset.elo) }));
-    const id = Date.now();
+    const participantElements = document.querySelectorAll('.singles-slot, .team-slot');
+    if (participantElements.length < 2) return alert("Need at least 2 participants to lock a division.");
 
-    lockedDivisions.push({ id, name: divName, format, participants });
-    renderLockedLog();
+    const participants = Array.from(participantElements).map(el => ({
+        name: el.dataset.finalName,
+        elo: parseInt(el.dataset.finalElo)
+    }));
+
+    lockedDivisions.push({
+        name: divName,
+        format: format,
+        participants: participants
+    });
+
+    const divLog = document.getElementById('locked-divisions-list');
+    divLog.innerHTML += `<div style="margin-bottom: 5px;">✅ Locked: <b>${divName}</b> (${participants.length} entries)</div>`;
+
     document.getElementById('team-draft-area').innerHTML = '';
+    renderRoster();
 });
 
-function renderLockedLog() {
-    const log = document.getElementById('locked-log');
-    log.innerHTML = '';
-    lockedDivisions.forEach((div, index) => {
-        const item = document.createElement('div');
-        item.style = "background:#333; padding:8px; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;";
-        item.innerHTML = `
-            <span>✅ ${div.name} (${div.participants.length})</span>
-            <button onclick="unlockDivision(${index})" style="background:#555; border:none; color:white; padding:2px 8px; cursor:pointer; font-size:11px;">Unlock</button>
-        `;
-        log.appendChild(item);
+// --- TOURNAMENT PREVIEW LOGIC ---
+document.getElementById('btn-start').addEventListener('click', () => {
+    
+    // Fallback: If nothing is locked, try to launch what is currently drafted
+    if (lockedDivisions.length === 0) {
+        document.getElementById('btn-lock-division').click();
+    }
+
+    if (lockedDivisions.length === 0) return; // Still nothing, exit
+
+    let matchesHtml = '';
+
+    lockedDivisions.forEach(division => {
+        matchesHtml += `<div class="section-title" style="margin-top: 30px;">${division.name} (${division.format === 'round_robin' ? 'Round Robin' : 'Knockout'})</div>`;
+
+        if (division.format === 'round_robin') {
+            const groupCount = Math.ceil(division.participants.length / 4);
+            const groups = Array.from({ length: groupCount }, () => []);
+            
+            let forward = true;
+            let groupIndex = 0;
+            
+            division.participants.forEach((p) => {
+                groups[groupIndex].push(p);
+                if (forward) {
+                    groupIndex++;
+                    if (groupIndex >= groupCount) { groupIndex--; forward = false; }
+                } else {
+                    groupIndex--;
+                    if (groupIndex < 0) { groupIndex++; forward = true; }
+                }
+            });
+
+            groups.forEach((group, gIndex) => {
+                matchesHtml += `<div style="background:#333; padding:8px 12px; margin-top:15px; font-weight:bold; color:var(--uha-gold); border-radius:4px;">Group ${String.fromCharCode(65 + gIndex)}</div>`;
+                for (let i = 0; i < group.length; i++) {
+                    for (let j = i + 1; j < group.length; j++) {
+                        matchesHtml += createMatchCard(group[i].name, group[j].name);
+                    }
+                }
+            });
+
+        } else if (division.format === 'single_elim') {
+            let p = [...division.participants];
+            while (p.length > 1) {
+                let highSeed = p.shift();
+                let lowSeed = p.pop();
+                matchesHtml += createMatchCard(highSeed.name, lowSeed.name);
+            }
+            if (p.length === 1) {
+                matchesHtml += `<div style="padding:15px; color:var(--uha-blue); font-style: italic;">** ${p[0].name} receives a Bye **</div>`;
+            }
+        }
     });
-}
 
-window.unlockDivision = (index) => {
-    const div = lockedDivisions[index];
-    const area = document.getElementById('team-draft-area');
-    
-    // Repopulate draft area
-    div.participants.forEach(p => addToDraft({ name: p.name, singles: p.elo, doubles: p.elo }));
-    
-    lockedDivisions.splice(index, 1);
-    renderLockedLog();
-};
-
-// --- 5, 6, 7 & 8: BRACKET & SCORING ---
-document.getElementById('btn-launch').addEventListener('click', () => {
-    if (lockedDivisions.length === 0) return alert("Lock a division first.");
-    const div = lockedDivisions[0];
-    
+    document.getElementById('matchup-container').innerHTML = matchesHtml;
+    // THIS LINE IS CRITICAL - It hides the admin dashboard so you can see the preview
     document.getElementById('admin-dashboard').style.display = 'none';
     document.getElementById('tournament-view').style.display = 'block';
-    document.getElementById('view-title').innerText = div.name;
-
-    if (div.format === 'single_elim') {
-        initBracket(div.participants);
-    }
 });
 
-function initBracket(participants) {
-    const sorted = [...participants].sort((a, b) => b.elo - a.elo);
-    const round1 = [];
-    while (sorted.length > 1) {
-        round1.push({ p1: sorted.shift(), p2: sorted.pop(), winner: null });
-    }
-    if (sorted.length === 1) round1.push({ p1: sorted.shift(), p2: { name: "BYE" }, winner: 'p1', scoreText: "BYE" });
-
-    currentBracket = [round1];
-    renderBracket();
+function createMatchCard(teamA, teamB) {
+    return `
+        <div class="match-card">
+            <div style="flex:1;">
+                <div class="team-a" style="font-weight:bold;">${teamA} <span class="score-a" style="color:var(--uha-blue); margin-left:10px;"></span></div>
+                <div class="match-vs">vs</div>
+                <div class="team-b" style="font-weight:bold;">${teamB} <span class="score-b" style="color:var(--uha-blue); margin-left:10px;"></span></div>
+            </div>
+            <button class="uha-btn" style="width:auto; padding:8px 15px;" onclick="mockScore(this)">Enter Score</button>
+        </div>
+    `;
 }
 
-function renderBracket() {
-    const container = document.getElementById('bracket-view');
-    container.innerHTML = '<div style="display:flex; gap:30px; padding:20px; overflow-x:auto;"></div>';
-    const wrapper = container.firstChild;
+// Mock Scoring Function for Preview
+window.mockScore = function(btnElement) {
+    const card = btnElement.closest('.match-card');
+    const teamA = card.querySelector('.team-a').innerText;
+    const teamB = card.querySelector('.team-b').innerText;
 
-    currentBracket.forEach((round, rIdx) => {
-        const col = document.createElement('div');
-        col.style = "min-width:220px; display:flex; flex-direction:column; justify-content:space-around;";
-        col.innerHTML = `<h4 style="color:#f1c40f; text-align:center;">Round ${rIdx + 1}</h4>`;
-
-        round.forEach((match, mIdx) => {
-            const card = document.createElement('div');
-            card.style = "background:#1e1e1e; border:1px solid #444; padding:10px; margin:15px 0; border-radius:4px;";
-            
-            // Point 8: Name colors for winner/loser
-            const p1Color = match.winner === 'p1' ? '#2ecc71' : (match.winner === 'p2' ? '#e74c3c' : '#fff');
-            const p2Color = match.winner === 'p2' ? '#2ecc71' : (match.winner === 'p1' ? '#e74c3c' : '#fff');
-
-            card.innerHTML = `
-                <div style="color:${p1Color}; font-weight:bold; display:flex; justify-content:space-between;">
-                    <span>${match.p1.name}</span> <span>${match.p1Games || ''}</span>
-                </div>
-                <div style="font-size:10px; text-align:center; color:#555; margin:5px 0;">vs</div>
-                <div style="color:${p2Color}; font-weight:bold; display:flex; justify-content:space-between;">
-                    <span>${match.p2.name}</span> <span>${match.p2Games || ''}</span>
-                </div>
-                ${match.winner ? `<div style="font-size:9px; color:#888; margin-top:5px;">${match.scoreText}</div>` : ''}
-                ${!match.winner ? `<button onclick="enterScores(${rIdx}, ${mIdx})" style="width:100%; margin-top:10px; cursor:pointer;">Enter Scores</button>` : ''}
-            `;
-            col.appendChild(card);
-        });
-        wrapper.appendChild(col);
-    });
-}
-
-// Point 7: Individual Game Scores (21-15, etc.)
-window.enterScores = (rIdx, mIdx) => {
-    const match = currentBracket[rIdx][mIdx];
-    const input = prompt(`Enter scores for ${match.p1.name} vs ${match.p2.name}\nExample: 21-15, 18-21, 11-7`);
+    const scoreStr = prompt(`Enter games won for ${teamA} vs ${teamB} (e.g., 2-1 or 2-0):`);
     
-    if (!input) return;
+    if (scoreStr && scoreStr.includes('-')) {
+        const scores = scoreStr.split('-');
+        card.querySelector('.score-a').innerText = `[${scores[0]}]`;
+        card.querySelector('.score-b').innerText = `[${scores[1]}]`;
 
-    const sets = input.split(',').map(s => s.trim().split('-').map(Number));
-    let p1Wins = 0, p2Wins = 0;
-
-    sets.forEach(set => {
-        if (set[0] > set[1]) p1Wins++;
-        else if (set[1] > set[0]) p2Wins++;
-    });
-
-    match.p1Games = p1Wins;
-    match.p2Games = p2Wins;
-    match.winner = p1Wins > p2Wins ? 'p1' : 'p2';
-    match.scoreText = input;
-
-    // Point 6: Auto-progress to next round
-    progressTournament(rIdx, mIdx);
-    renderBracket();
+        if (parseInt(scores[0]) > parseInt(scores[1])) {
+            card.style.borderColor = 'var(--green-win)';
+        } else {
+            card.style.borderColor = 'var(--red-lose)';
+        }
+        
+        btnElement.innerText = "Edit Score";
+        btnElement.style.background = "#555";
+    }
 };
 
-function progressTournament(rIdx, mIdx) {
-    const winner = currentBracket[rIdx][mIdx][currentBracket[rIdx][mIdx].winner];
-    const nextR = rIdx + 1;
-    const nextM = Math.floor(mIdx / 2);
-
-    if (!currentBracket[nextR]) {
-        const nextRoundSize = Math.ceil(currentBracket[rIdx].length / 2);
-        if (nextRoundSize < 1) return;
-        currentBracket[nextR] = Array.from({ length: nextRoundSize }, () => ({ p1: { name: "TBD" }, p2: { name: "TBD" } }));
-    }
-
-    if (mIdx % 2 === 0) currentBracket[nextR][nextM].p1 = winner;
-    else currentBracket[nextR][nextM].p2 = winner;
-}
-
-// --- LISTENERS ---
-function setupListeners() {
-    document.getElementById('btn-mode-singles').onclick = () => { isDoublesMode = false; updateUIForMode(); };
-    document.getElementById('btn-mode-doubles').onclick = () => { isDoublesMode = true; updateUIForMode(); };
-    document.getElementById('player-search').oninput = renderRoster;
-}
-
-init();
+// Initialize
+refreshRosterFromDB();
