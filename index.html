@@ -1,67 +1,80 @@
-<main style="max-width: 1200px; margin: 0 auto; padding: 20px; color: #ffffff; font-family: 'Segoe UI', sans-serif;">
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h1 style="margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px;">UHA Tournament Dashboard</h1>
-        <div id="connection-status" style="font-size: 12px; color: #888;">Connecting to Firebase...</div>
-    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UHA Tournament Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-    <section id="public-viewer" style="display:none; background: #1e1e1e; padding: 25px; border-radius: 12px; border-top: 4px solid #3498db; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-        <h2 style="margin-top: 0; color: #3498db;">Live Tournament Brackets</h2>
-        <select id="public-tournament-selector" style="width: 100%; padding: 12px; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 6px; margin-bottom: 20px;">
+<div class="uha-container">
+    <header class="uha-header">
+        <h1>UHA Tournament Dashboard</h1>
+        <div id="connection-status">Connecting to Firebase...</div>
+    </header>
+
+    <section id="public-viewer" style="display:none;" class="column">
+        <div class="section-title">Live Tournament Brackets</div>
+        <select id="public-tournament-selector">
             <option value="active">Current Live Tournament</option>
         </select>
-        <div id="public-bracket-container" style="padding: 20px; text-align: center; color: #888;">Loading brackets...</div>
+        <div id="public-bracket-container" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading brackets...</div>
     </section>
 
-    <section id="admin-dashboard" style="display: flex; gap: 20px; align-items: flex-start;">
-        
-        <div class="uha-card" style="flex: 1; background: #1e1e1e; padding: 25px; border-radius: 12px; border-left: 4px solid #3498db; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-            <h3 style="margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px; color: #fff;">1. Config & Wildcards</h3>
+    <section id="admin-dashboard">
+        <div class="setup-columns">
             
-            <div style="margin: 20px 0;">
-                <button class="uha-btn" id="btn-mode-singles" style="background: #3498db; border: none; padding: 10px 20px; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">Singles</button>
-                <button class="uha-btn" id="btn-mode-doubles" style="background: #333; border: none; padding: 10px 20px; color: white; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 5px;">Doubles</button>
-            </div>
-            
-            <div style="display: flex; gap: 8px; margin-bottom: 20px;">
-                <input type="text" id="wildcard-name" placeholder="Wildcard Name..." style="flex:2; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px;">
-                <input type="number" id="wildcard-elo" placeholder="ELO" value="1000" style="width: 70px; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px;">
-                <button id="btn-add-wildcard" style="background: #444; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">+ Add</button>
-            </div>
+            <div class="column">
+                <div class="section-title">1. Config & Wildcards</div>
+                <div class="mode-toggle">
+                    <button class="mode-btn active" id="btn-mode-singles">Singles</button>
+                    <button class="mode-btn" id="btn-mode-doubles">Doubles</button>
+                </div>
+                
+                <div class="input-group">
+                    <input type="text" id="wildcard-name" placeholder="Wildcard Name..." style="flex: 2; margin-bottom: 0;">
+                    <input type="number" id="wildcard-elo" placeholder="ELO" value="1000" style="flex: 1; margin-bottom: 0;">
+                    <button id="btn-add-wildcard" class="uha-btn" style="width: auto; padding: 10px;">+ Add</button>
+                </div>
 
-            <h3 style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 30px; color: #fff;">2. Lock Division</h3>
-            <div style="display: flex; flex-direction: column; gap: 10px; margin: 15px 0;">
-                <input type="text" id="division-name" placeholder="e.g., Open, A, B..." value="Open Division" style="padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px;">
-                <select id="tourney-type" style="padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px;">
+                <div class="section-title" style="margin-top: 30px;">2. Lock Division</div>
+                <input type="text" id="division-name" placeholder="e.g. Open, A, B..." value="Open Division">
+                <select id="tourney-type">
                     <option value="round_robin">Round Robin</option>
                     <option value="single_elim">Knockout Bracket</option>
                 </select>
-            </div>
-            
-            <button id="btn-lock-division" style="width: 100%; padding: 14px; background-color: #f1c40f; color: #000; font-weight: 800; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase;">Lock Current Division</button>
-            <div id="locked-divisions-list" style="color: #3498db; font-size: 13px; margin-top: 15px; font-weight: bold;"></div>
+                <button id="btn-lock-division" class="uha-btn uha-btn-gold">Lock Current Division</button>
+                
+                <div id="locked-divisions-list" style="margin-top: 15px; font-size: 14px; color: var(--uha-blue);"></div>
 
-            <button id="btn-start" style="width: 100%; padding: 14px; background-color: #3498db; color: #fff; font-weight: 800; border: none; border-radius: 6px; cursor: pointer; margin-top: 25px; text-transform: uppercase;">Preview & Push to Live</button>
-        </div>
-
-        <div style="flex: 2; display: flex; gap: 20px;">
-            <div class="uha-card" style="flex: 1; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                <h3 style="margin-top: 0; color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px;">Roster</h3>
-                <input type="text" id="player-search" placeholder="Search roster..." style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px; margin-bottom: 15px; box-sizing: border-box;">
-                <div id="player-list" style="max-height: 500px; overflow-y: auto; padding-right: 5px;"></div>
+                <button id="btn-start" class="uha-btn" style="margin-top: 30px;">Preview & Push to Live</button>
             </div>
 
-            <div class="uha-card" style="flex: 1; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                <h3 style="margin-top: 0; color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px;">Drafted Teams</h3>
-                <div id="team-draft-area" style="min-height: 200px;"></div>
+            <div class="column">
+                <div class="section-title">Roster</div>
+                <input type="text" id="player-search" placeholder="Search roster...">
+                <div id="player-list"></div>
             </div>
+
+            <div class="column">
+                <div class="section-title">Drafted Teams</div>
+                <div id="team-draft-area"></div>
+            </div>
+
         </div>
     </section>
 
-    <section id="tournament-view" style="display:none; background: #1e1e1e; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-        <h2 id="tourney-title" style="margin-top: 0; color: #3498db;">Tournament Preview</h2>
+    <section id="tournament-view" style="display:none;" class="column">
+        <div class="section-title" id="tourney-title">Tournament Preview</div>
         <div id="matchup-container"></div>
-        <button onclick="location.reload()" style="margin-top:20px; padding: 12px 25px; background: #444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Reset / Back to Setup</button>
+        <button onclick="location.reload()" class="uha-btn-outline" style="margin-top: 20px;">Reset / Back to Setup</button>
     </section>
+</div>
 
-</main>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
