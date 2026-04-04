@@ -243,3 +243,60 @@ input[type="text"], input[type="number"], select {
     float: right;
 }
 .unlock-btn:hover { background: #555; }
+
+/* --- ENHANCED BRACKET LAYOUT --- */
+.bracket-layout {
+    display: flex;
+    flex-direction: column;
+}
+.bracket-headers {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+.bracket-header {
+    min-width: 200px;
+    text-align: center;
+    color: var(--uha-gold);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.bracket-columns {
+    display: flex;
+    gap: 30px;
+    overflow-x: auto;
+    padding-bottom: 20px;
+}
+.bracket-round {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around; /* This centers the matches vertically */
+    min-width: 200px;
+    gap: 15px;
+}
+
+/* --- STANDINGS TABLE --- */
+.standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: #1a1a1a;
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 14px;
+}
+.standings-table th, .standings-table td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+}
+.standings-table th { 
+    background: #222; 
+    color: var(--uha-gold); 
+}
+.standings-table tr:hover {
+    background: #252525;
+}
