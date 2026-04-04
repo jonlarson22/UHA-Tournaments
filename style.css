@@ -1,4 +1,3 @@
-/* --- UHA THEME VARIABLES --- */
 :root {
     --bg-main: #121212;
     --bg-panel: #1e1e1e;
@@ -7,210 +6,126 @@
     --text-light: #ffffff;
     --text-muted: #aaaaaa;
     --border-color: #333333;
-    --green-win: #2ecc71;
-    --red-lose: #e74c3c;
+    --win-green: #2ecc71;
+    --loss-red: #e74c3c;
 }
 
-/* --- GLOBAL STYLES --- */
 body {
     background-color: var(--bg-main);
     color: var(--text-light);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     margin: 0;
     padding: 20px;
 }
 
-.uha-container {
-    max-width: 1200px;
-    margin: 0 auto;
-}
+.uha-container { max-width: 1200px; margin: 0 auto; }
 
-/* --- HEADER --- */
-.uha-header {
+header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 15px;
     margin-bottom: 25px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
 }
 
-.uha-header h1 {
-    color: var(--text-light);
-    margin: 0;
-    font-size: 26px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-}
+h1 { font-size: 24px; text-transform: uppercase; letter-spacing: 1px; margin: 0; }
 
-#connection-status {
-    font-size: 13px;
-    color: var(--text-muted);
-    font-weight: bold;
-}
-
-/* --- LAYOUT & PANELS --- */
-.section-title {
-    color: var(--uha-blue);
-    text-transform: uppercase;
-    font-size: 16px;
-    margin-bottom: 15px;
-    font-weight: bold;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 8px;
-}
-
-.setup-columns {
+/* Dashboard Layout */
+.dashboard-grid {
     display: flex;
-    gap: 25px;
-    align-items: stretch;
+    gap: 20px;
+    align-items: flex-start;
 }
 
 .column {
-    flex: 1;
     background: var(--bg-panel);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    flex: 1;
 }
 
-/* --- INPUTS & CONTROLS --- */
-input[type="text"], input[type="number"], select {
+.column-wide { flex: 2; display: flex; gap: 20px; }
+
+h3 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    color: var(--uha-blue);
+    font-size: 16px;
+    text-transform: uppercase;
+}
+
+/* Form Elements */
+input, select {
     width: 100%;
     padding: 10px;
     background: #111;
     border: 1px solid var(--border-color);
     color: white;
-    border-radius: 4px;
-    margin-bottom: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
     box-sizing: border-box;
 }
 
-.input-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-/* --- BUTTONS --- */
 .uha-btn {
-    background: var(--uha-blue);
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
     width: 100%;
-    text-transform: uppercase;
-    transition: filter 0.2s;
-}
-.uha-btn:hover { filter: brightness(1.1); }
-
-.uha-btn-gold {
-    background: var(--uha-gold);
-    color: black;
-}
-
-.uha-btn-outline {
-    background: transparent;
-    color: var(--uha-blue);
-    border: 1px solid var(--uha-blue);
     padding: 12px;
-    width: 100%;
-    cursor: pointer;
-    border-radius: 4px;
-    text-transform: uppercase;
-    font-weight: bold;
-    transition: background 0.2s;
-}
-.uha-btn-outline:hover { background: rgba(52, 152, 219, 0.1); }
-
-/* --- TOGGLES --- */
-.mode-toggle {
-    display: flex;
-    background: #111;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 20px;
-    border: 1px solid var(--border-color);
-}
-.mode-btn {
-    flex: 1;
-    padding: 10px;
-    background: transparent;
-    color: var(--text-muted);
     border: none;
-    cursor: pointer;
+    border-radius: 6px;
     font-weight: bold;
-    text-transform: uppercase;
-}
-.mode-btn.active { background: var(--uha-blue); color: white; }
-
-/* --- LISTS & DRAFTS --- */
-#player-list {
-    max-height: 500px;
-    overflow-y: auto;
-    padding-right: 5px;
-}
-#player-list::-webkit-scrollbar { width: 6px; }
-#player-list::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-
-.player-item {
-    background: #252525;
-    border: 1px solid #333;
-    padding: 12px;
-    margin-bottom: 8px;
-    border-radius: 4px;
     cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    transition: border-color 0.2s;
+    text-transform: uppercase;
+    transition: 0.2s;
 }
-.player-item:hover { border-color: var(--uha-blue); }
 
-.singles-slot {
-    background: #111;
-    border: 1px solid #444;
-    padding: 12px;
-    margin-bottom: 8px;
-    border-radius: 4px;
-    display: flex;
-    justify-content: space-between;
-    border-left: 3px solid var(--uha-gold);
-}
-.remove-team-btn { background: none; border: none; color: var(--red-lose); cursor: pointer; font-weight: bold; padding: 0 5px; }
+.btn-primary { background: var(--uha-blue); color: white; }
+.btn-gold { background: var(--uha-gold); color: black; }
+.btn-dark { background: #333; color: white; }
 
-.team-slot {
-    border: 1px solid #444;
-    border-radius: 4px;
-    margin-bottom: 15px;
-    background: #111;
-    overflow: hidden;
-    border-left: 3px solid var(--uha-gold);
-}
-.team-header {
-    background: #222;
-    padding: 8px 12px;
-    font-size: 13px;
+/* Bracket Styles */
+.bracket-container {
     display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid #333;
-    color: var(--text-muted);
+    gap: 40px;
+    overflow-x: auto;
+    padding: 20px 0;
 }
-.slots { padding: 10px; min-height: 40px; }
 
-/* --- MATCH CARDS --- */
+.bracket-round {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    min-width: 250px;
+}
+
 .match-card {
     background: #1a1a1a;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 15px;
-    margin-bottom: 10px;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 8px;
+    position: relative;
+}
+
+.match-player {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    padding: 5px 0;
+    font-weight: bold;
 }
-.match-team { font-weight: bold; font-size: 15px; }
-.match-vs { color: var(--text-muted); font-size: 12px; margin: 0 10px; }
+
+.winner { color: var(--win-green) !important; }
+.loser { color: var(--loss-red) !important; }
+.score-pill { font-size: 11px; color: var(--uha-blue); }
+
+.edit-division-btn {
+    font-size: 10px;
+    padding: 4px 8px;
+    margin-left: 10px;
+    background: #444;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+}
