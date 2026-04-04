@@ -36,6 +36,7 @@ document.getElementById('btn-mode-singles').addEventListener('click', (e) => {
     isDoublesMode = false;
     e.target.classList.add('active');
     document.getElementById('btn-mode-doubles').classList.remove('active');
+    document.getElementById('draft-header').innerText = "Selected Players"; // Point 3
     teamDraftArea.innerHTML = ''; 
     renderRoster();
 });
@@ -44,6 +45,7 @@ document.getElementById('btn-mode-doubles').addEventListener('click', (e) => {
     isDoublesMode = true;
     e.target.classList.add('active');
     document.getElementById('btn-mode-singles').classList.remove('active');
+    document.getElementById('draft-header').innerText = "Teams"; // Point 3
     teamDraftArea.innerHTML = ''; 
     renderRoster();
 });
@@ -99,7 +101,6 @@ playerListDiv.addEventListener('click', (e) => {
     if (!playerItem) return;
 
     if (!isDoublesMode) {
-        // Singles Draft
         const singlesDiv = document.createElement('div');
         singlesDiv.className = 'singles-slot';
         singlesDiv.dataset.finalName = playerItem.dataset.name;
@@ -115,7 +116,6 @@ playerListDiv.addEventListener('click', (e) => {
         teamDraftArea.appendChild(singlesDiv);
 
     } else {
-        // Doubles Draft (Auto-pairing)
         let openSlot = document.querySelector('.team-slot:last-child .slots');
 
         if (!openSlot || openSlot.children.length >= 2) {
@@ -147,7 +147,6 @@ playerListDiv.addEventListener('click', (e) => {
     renderRoster();
 });
 
-// Remove Drafted Teams
 teamDraftArea.addEventListener('click', (e) => {
     if (e.target.classList.contains('remove-team-btn')) {
         const slot = e.target.closest('.singles-slot') || e.target.closest('.team-slot');
@@ -156,7 +155,6 @@ teamDraftArea.addEventListener('click', (e) => {
     }
 });
 
-// Update ELO for Teams
 function updateTeamElo(teamDiv) {
     const players = teamDiv.querySelectorAll('.drafted-id');
     let totalElo = 0;
@@ -207,113 +205,159 @@ document.getElementById('btn-lock-division').addEventListener('click', () => {
     lockedDivisions.push({
         name: divName,
         format: format,
-        participants: participants
+        participants: participants,
+        bracket: [] // We will store match progress here
     });
 
-    const divLog = document.getElementById('locked-divisions-list');
-    divLog.innerHTML += `<div style="margin-bottom: 5px;">✅ Locked: <b>${divName}</b> (${participants.length} entries)</div>`;
-
+    renderLockedDivisions();
     document.getElementById('team-draft-area').innerHTML = '';
     renderRoster();
 });
 
-// --- TOURNAMENT PREVIEW LOGIC ---
+// Point 4: Unlock Division
+function renderLockedDivisions() {
+    const divLog = document.getElementById('locked-divisions-list');
+    divLog.innerHTML = '';
+    lockedDivisions.forEach((div, index) => {
+        divLog.innerHTML += `
+            <div style="background: rgba(52, 152, 219, 0.1); padding: 8px; border-radius: 4px; margin-bottom: 5px; border-left: 3px solid var(--uha-blue);">
+                ✅ Locked: <b>${div.name}</b> (${div.participants.length} entries)
+                <button class="unlock-btn" onclick="unlockDivision(${index})">Unlock</button>
+            </div>
+        `;
+    });
+}
+
+window.unlockDivision = function(index) {
+    const divToUnlock = lockedDivisions.splice(index, 1)[0];
+    divToUnlock.participants.forEach(p => {
+        const slot = document.createElement('div');
+        slot.className = 'singles-slot'; 
+        slot.dataset.finalName = p.name;
+        slot.dataset.finalElo = p.elo;
+        slot.innerHTML = `
+            <div style="font-weight: bold;">
+                ${p.name} <span style="color:var(--uha-blue); margin-left:10px;">${Math.round(p.elo)}</span>
+            </div>
+            <button class="remove-team-btn">X</button>
+        `;
+        teamDraftArea.appendChild(slot);
+    });
+    renderLockedDivisions();
+};
+
+// --- TOURNAMENT PREVIEW & BRACKET PROGRESSION LOGIC ---
 document.getElementById('btn-start').addEventListener('click', () => {
-    
-    // Fallback: If nothing is locked, try to launch what is currently drafted
     if (lockedDivisions.length === 0) {
         document.getElementById('btn-lock-division').click();
     }
+    if (lockedDivisions.length === 0) return; 
 
-    if (lockedDivisions.length === 0) return; // Still nothing, exit
-
-    let matchesHtml = '';
-
+    // Point 5: Initialize visual brackets
     lockedDivisions.forEach(division => {
-        matchesHtml += `<div class="section-title" style="margin-top: 30px;">${division.name} (${division.format === 'round_robin' ? 'Round Robin' : 'Knockout'})</div>`;
-
-        if (division.format === 'round_robin') {
-            const groupCount = Math.ceil(division.participants.length / 4);
-            const groups = Array.from({ length: groupCount }, () => []);
-            
-            let forward = true;
-            let groupIndex = 0;
-            
-            division.participants.forEach((p) => {
-                groups[groupIndex].push(p);
-                if (forward) {
-                    groupIndex++;
-                    if (groupIndex >= groupCount) { groupIndex--; forward = false; }
-                } else {
-                    groupIndex--;
-                    if (groupIndex < 0) { groupIndex++; forward = true; }
-                }
-            });
-
-            groups.forEach((group, gIndex) => {
-                matchesHtml += `<div style="background:#333; padding:8px 12px; margin-top:15px; font-weight:bold; color:var(--uha-gold); border-radius:4px;">Group ${String.fromCharCode(65 + gIndex)}</div>`;
-                for (let i = 0; i < group.length; i++) {
-                    for (let j = i + 1; j < group.length; j++) {
-                        matchesHtml += createMatchCard(group[i].name, group[j].name);
-                    }
-                }
-            });
-
-        } else if (division.format === 'single_elim') {
+        if (division.format === 'single_elim' && division.bracket.length === 0) {
             let p = [...division.participants];
+            let round1 = [];
             while (p.length > 1) {
-                let highSeed = p.shift();
-                let lowSeed = p.pop();
-                matchesHtml += createMatchCard(highSeed.name, lowSeed.name);
+                round1.push({ p1: p.shift(), p2: p.pop(), p1Wins: 0, p2Wins: 0, scores: '', winner: null });
             }
             if (p.length === 1) {
-                matchesHtml += `<div style="padding:15px; color:var(--uha-blue); font-style: italic;">** ${p[0].name} receives a Bye **</div>`;
+                round1.push({ p1: p.shift(), p2: null, p1Wins: 0, p2Wins: 0, scores: 'BYE', winner: 'p1' });
             }
+            division.bracket = [round1];
         }
     });
 
-    document.getElementById('matchup-container').innerHTML = matchesHtml;
-    // THIS LINE IS CRITICAL - It hides the admin dashboard so you can see the preview
+    renderTournamentView();
     document.getElementById('admin-dashboard').style.display = 'none';
     document.getElementById('tournament-view').style.display = 'block';
 });
 
-function createMatchCard(teamA, teamB) {
-    return `
-        <div class="match-card">
-            <div style="flex:1;">
-                <div class="team-a" style="font-weight:bold;">${teamA} <span class="score-a" style="color:var(--uha-blue); margin-left:10px;"></span></div>
-                <div class="match-vs">vs</div>
-                <div class="team-b" style="font-weight:bold;">${teamB} <span class="score-b" style="color:var(--uha-blue); margin-left:10px;"></span></div>
-            </div>
-            <button class="uha-btn" style="width:auto; padding:8px 15px;" onclick="mockScore(this)">Enter Score</button>
-        </div>
-    `;
+function renderTournamentView() {
+    let html = '';
+    lockedDivisions.forEach((div, divIdx) => {
+        html += `<div class="section-title" style="margin-top: 30px;">${div.name}</div>`;
+        
+        if (div.format === 'single_elim') {
+            html += `<div class="bracket-wrapper">`;
+            div.bracket.forEach((round, rIdx) => {
+                html += `<div class="bracket-round">`;
+                html += `<div style="text-align:center; color:var(--uha-gold); font-weight:bold;">Round ${rIdx + 1}</div>`;
+                
+                round.forEach((match, mIdx) => {
+                    const p1Class = match.winner === 'p1' ? 'text-win' : (match.winner === 'p2' ? 'text-lose' : '');
+                    const p2Class = match.winner === 'p2' ? 'text-win' : (match.winner === 'p1' ? 'text-lose' : '');
+                    
+                    html += `
+                    <div class="match-card">
+                        <div class="match-team ${p1Class}">${match.p1 ? match.p1.name : 'TBD'} <span>${match.scores ? match.p1Wins : ''}</span></div>
+                        <div class="match-vs">vs</div>
+                        <div class="match-team ${p2Class}">${match.p2 ? match.p2.name : (match.scores === 'BYE' ? '' : 'TBD')} <span>${match.scores ? match.p2Wins : ''}</span></div>
+                        ${match.scores ? `<div style="text-align:center; font-size:10px; color:#888; margin-top:5px;">${match.scores}</div>` : ''}
+                        ${!match.winner && match.p1 && match.p2 ? `<button class="uha-btn" style="margin-top:10px; font-size:11px; padding:6px;" onclick="enterScore(${divIdx}, ${rIdx}, ${mIdx})">Enter Score</button>` : ''}
+                    </div>`;
+                });
+                html += `</div>`;
+            });
+            html += `</div>`;
+        } else {
+            // Placeholder for Round Robin view
+            html += `<div style="padding:20px; text-align:center; color:#888;">Round Robin View Active</div>`;
+        }
+    });
+    document.getElementById('matchup-container').innerHTML = html;
 }
 
-// Mock Scoring Function for Preview
-window.mockScore = function(btnElement) {
-    const card = btnElement.closest('.match-card');
-    const teamA = card.querySelector('.team-a').innerText;
-    const teamB = card.querySelector('.team-b').innerText;
+// Point 7 & 6: Score Entry and Progression
+window.enterScore = function(divIdx, rIdx, mIdx) {
+    const div = lockedDivisions[divIdx];
+    const match = div.bracket[rIdx][mIdx];
 
-    const scoreStr = prompt(`Enter games won for ${teamA} vs ${teamB} (e.g., 2-1 or 2-0):`);
-    
-    if (scoreStr && scoreStr.includes('-')) {
-        const scores = scoreStr.split('-');
-        card.querySelector('.score-a').innerText = `[${scores[0]}]`;
-        card.querySelector('.score-b').innerText = `[${scores[1]}]`;
+    const scoreStr = prompt(`Enter game scores for ${match.p1.name} vs ${match.p2.name} (e.g., 21-15, 18-21, 11-7):`);
+    if (!scoreStr) return;
 
-        if (parseInt(scores[0]) > parseInt(scores[1])) {
-            card.style.borderColor = 'var(--green-win)';
-        } else {
-            card.style.borderColor = 'var(--red-lose)';
+    const games = scoreStr.split(',');
+    let p1Wins = 0, p2Wins = 0;
+
+    games.forEach(g => {
+        const scores = g.trim().split('-');
+        if (scores.length === 2) {
+            const s1 = parseInt(scores[0]);
+            const s2 = parseInt(scores[1]);
+            if (s1 > s2) p1Wins++;
+            else if (s2 > s1) p2Wins++;
         }
-        
-        btnElement.innerText = "Edit Score";
-        btnElement.style.background = "#555";
-    }
+    });
+
+    match.scores = scoreStr;
+    match.p1Wins = p1Wins;
+    match.p2Wins = p2Wins;
+
+    if (p1Wins > p2Wins) match.winner = 'p1';
+    else if (p2Wins > p1Wins) match.winner = 'p2';
+    else return alert("Scores result in a tie. Please re-enter.");
+
+    progressBracket(divIdx, rIdx, mIdx);
+    renderTournamentView();
 };
+
+function progressBracket(divisionIndex, rIdx, mIdx) {
+    let div = lockedDivisions[divisionIndex];
+    let match = div.bracket[rIdx][mIdx];
+    let winner = match.winner === 'p1' ? match.p1 : match.p2;
+
+    let nextRIdx = rIdx + 1;
+    let nextMIdx = Math.floor(mIdx / 2);
+
+    if (!div.bracket[nextRIdx]) {
+        let numMatches = Math.ceil(div.bracket[rIdx].length / 2);
+        if (numMatches === 0 || (numMatches === 1 && div.bracket[rIdx].length === 1)) return; // Done
+        div.bracket[nextRIdx] = Array.from({length: numMatches}, () => ({p1: null, p2: null, p1Wins: 0, p2Wins: 0, scores: '', winner: null}));
+    }
+
+    if (mIdx % 2 === 0) div.bracket[nextRIdx][nextMIdx].p1 = winner;
+    else div.bracket[nextRIdx][nextMIdx].p2 = winner;
+}
 
 // Initialize
 refreshRosterFromDB();
