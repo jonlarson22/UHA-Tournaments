@@ -479,19 +479,29 @@ window.advanceToKnockout = function(divIdx) {
 }
 
 function generateMatchCardHTML(match, divIdx, rIdx, mIdx) {
-    const p1Class = match.winner === 'p1' ? 'text-win' : (match.winner === 'p2' ? 'text-lose' : '');
-    const p2Class = match.winner === 'p2' ? 'text-win' : (match.winner === 'p1' ? 'text-lose' : '');
-    const isBye = match.scores === 'BYE';
-    const hasScore = match.scores && !isBye;
+    // Safely check for player names, defaulting to "BYE" if null
+    let teamA = match.p1 ? match.p1.name : "BYE";
+    let teamB = match.p2 ? match.p2.name : "BYE";
     
+    // Safely format scores if they exist
+    let scoreA = match.scores && match.scores !== 'BYE' ? `[${match.p1Wins}]` : '';
+    let scoreB = match.scores && match.scores !== 'BYE' ? `[${match.p2Wins}]` : '';
+
+    // If it's a BYE, we don't need a score button
+    let actionArea = (teamA === "BYE" || teamB === "BYE") 
+        ? `<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:8px;">Auto-Advance</div>`
+        : `<button class="uha-btn" style="width:auto; padding:8px 15px;" onclick="openScoreModal(${divIdx}, ${rIdx}, ${mIdx})">Enter Score</button>`;
+
     return `
-    <div class="match-card" style="min-width: 200px; ${isBye ? 'opacity: 0.6; border-color: #555;' : ''}">
-        <div class="match-team ${p1Class}">${match.p1 ? match.p1.name : 'TBD'} <span>${hasScore ? match.p1Wins : ''}</span></div>
-        <div class="match-vs">vs</div>
-        <div class="match-team ${p2Class}">${match.p2 ? match.p2.name : (isBye ? '<span style="color:var(--uha-gold); font-style:italic;">** BYE **</span>' : 'TBD')} <span>${hasScore ? match.p2Wins : ''}</span></div>
-        ${hasScore ? `<div style="text-align:center; font-size:12px; color:#aaa; margin-top:8px; font-weight:bold;">${match.scores}</div>` : ''}
-        ${match.p1 && match.p2 && !isBye ? `<button class="uha-btn ${hasScore ? 'uha-btn-outline' : ''}" style="margin-top:10px; font-size:11px; padding:6px;" onclick="openScoreModal(${divIdx}, ${rIdx}, ${mIdx})">${hasScore ? 'Edit Score' : 'Enter Score'}</button>` : ''}
-    </div>`;
+        <div class="match-card">
+            <div style="flex:1;">
+                <div class="team-a" style="font-weight:bold;">${teamA} <span class="score-a" style="color:var(--uha-blue); margin-left:10px;">${scoreA}</span></div>
+                <div class="match-vs">vs</div>
+                <div class="team-b" style="font-weight:bold;">${teamB} <span class="score-b" style="color:var(--uha-blue); margin-left:10px;">${scoreB}</span></div>
+            </div>
+            ${actionArea}
+        </div>
+    `;
 }
 
 // --- BEST OF 3 MODAL LOGIC ---
