@@ -43,7 +43,7 @@ window.loginAdmin = function() {
 // --- STATE MANAGEMENT ---
 let allPlayers = []; 
 let isDoublesMode = false;
-let isAdmin = false;
+let isAdmin = true;
 let lockedDivisions = [];
 
 // Ensure panels display correctly based on Admin state
