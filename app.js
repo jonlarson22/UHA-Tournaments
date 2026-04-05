@@ -456,17 +456,23 @@ window.advanceToKnockout = function(divIdx) {
         
         if (div.format === 'single_elim') {
             html += `<div class="bracket-layout"><div class="bracket-columns">`;
+            
             div.bracket.forEach((round, rIdx) => {
-               html += `<div class="bracket-round">`;
+                html += `<div class="bracket-round">`;
                 html += `<div class="bracket-header" style="margin-bottom: 20px;">Round ${rIdx + 1}</div>`; 
-                // Wrap the matches in this new div:
                 html += `<div class="bracket-matches">`; 
+                
                 round.forEach((match, mIdx) => {
                     html += generateMatchCardHTML(match, divIdx, rIdx, mIdx);
                 });
-                html += `</div></div>`; // Close both divs
-            }} else if (div.format === 'round_robin'){
-            // ... (Keep your existing round_robin logic exactly the same here) ...
+                
+                html += `</div></div>`; // Closes bracket-matches and bracket-round
+            }); // <--- FIX: Added ); to close the forEach loop correctly
+
+            html += `</div></div>`; // Closes bracket-columns and bracket-layout
+            
+        } else if (div.format === 'round_robin') {
+            // ... (Keep your existing round_robin logic here) ...
         }
     });
     document.getElementById('matchup-container').innerHTML = html;
