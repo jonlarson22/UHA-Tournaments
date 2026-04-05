@@ -27,6 +27,7 @@ firebase.auth().onAuthStateChanged((user) => {
         document.getElementById('public-viewer').style.display = 'block';
         // TODO: Load read-only view from DB
     }
+    updateVisibility();
 });
 
 window.loginAdmin = function() {
@@ -38,9 +39,6 @@ window.loginAdmin = function() {
         })
         .catch((error) => alert("Login Failed: " + error.message));
 };
-
-// Add a quick function you can run in your console once to create your admin account:
-// firebase.auth().createUserWithEmailAndPassword("admin@uha.com", "yourpassword");
 
 // --- STATE MANAGEMENT ---
 let allPlayers = []; 
@@ -62,7 +60,6 @@ function updateVisibility() {
         if(resetBtn) resetBtn.style.display = 'none'; 
     }
 }
-updateVisibility();
 
 const teamDraftArea = document.getElementById('team-draft-area');
 const playerListDiv = document.getElementById('player-list');
@@ -228,7 +225,8 @@ document.getElementById('btn-add-wildcard').addEventListener('click', () => {
 
 // --- LOCKING LOGIC ---
 document.getElementById('btn-lock-division').addEventListener('click', () => {
-    const divName = document.getElementById('division-name').value;
+    const nameInput = document.getElementById('division-name');
+    const divName = nameInput ? nameInput.value : "Untitled Division";
     const format = document.getElementById('tourney-type').value;
     
     const participantElements = document.querySelectorAll('.singles-slot, .team-slot');
@@ -240,7 +238,7 @@ document.getElementById('btn-lock-division').addEventListener('click', () => {
     }));
 
     lockedDivisions.push({
-        name: divName,
+        name: divName || "Untitled Division",
         format: format,
         mode: isDoublesMode ? "Doubles" : "Singles",
         participants: participants,
@@ -249,6 +247,7 @@ document.getElementById('btn-lock-division').addEventListener('click', () => {
 
     renderLockedDivisions();
     document.getElementById('team-draft-area').innerHTML = '';
+    if(nameInput) nameInput.value = '';
     renderRoster();
 });
 
@@ -267,9 +266,11 @@ function renderLockedDivisions() {
 
 window.unlockDivision = function(index) {
     const divToUnlock = lockedDivisions.splice(index, 1)[0];
+    document.getElementById('division-name').value = divToUnlock.name;
+    
     divToUnlock.participants.forEach(p => {
         const slot = document.createElement('div');
-        slot.className = 'singles-slot'; 
+        slot.className = divToUnlock.mode === "Singles" ? 'singles-slot' : 'team-slot';
         slot.dataset.finalName = p.name;
         slot.dataset.finalElo = p.elo;
         slot.innerHTML = `
@@ -330,12 +331,11 @@ function buildSeededMatchups(teams) {
 
 // --- START TOURNAMENT & PUSH TO LIVE ---
 document.getElementById('btn-start').addEventListener('click', () => {
-    if (lockedDivisions.length === 0) {
-        document.getElementById('btn-lock-division').click();
-    }
-    if (lockedDivisions.length === 0) return; 
+    if (lockedDivisions.length === 0) return alert("You need to lock at least one division first!");
 
     lockedDivisions.forEach(division => {
+        if (division.bracket.length > 0) return; // Don't rebuild if bracket already exists
+        
         if (division.format === 'single_elim' && division.bracket.length === 0) {
             // 1. Get the participants
             let p = [...division.participants];
@@ -369,7 +369,7 @@ document.getElementById('btn-start').addEventListener('click', () => {
 
             division.bracket = bracket;
         } 
-        else if (division.format === 'round_robin' && division.bracket.length === 0) {
+        else if (division.format === 'round_robin') {
             let p = [...division.participants];
             let matches = [];
             for(let i=0; i<p.length; i++) {
@@ -386,10 +386,11 @@ document.getElementById('btn-start').addEventListener('click', () => {
         updatedAt: firebase.database.ServerValue.TIMESTAMP,
         divisions: lockedDivisions
     }).then(() => {
+        alert("Tournament saved and pushed live!");
         document.getElementById('admin-dashboard').style.display = 'none';
         document.getElementById('tournament-view').style.display = 'block';
         renderTournamentView();
-    });
+    }).catch((e) => alert("Error: " + e.message));
 });
 
 // --- STANDINGS CALCULATION (2-1-0 Logic & Tiebreakers) ---
