@@ -38,17 +38,19 @@
                 </div>
 
                 <div class="section-title" style="margin-top: 30px;">2. Division</div>
+
+                <input type="text" id="division-name" placeholder="Division Name (e.g., Open Singles)" class="uha-input" style="margin-bottom: 20px; width: 100%;">
+                
                 <div class="input-group">
-                        <input type="text" id="division-name" placeholder="Division Name (e.g., Open Singles)" class="uha-input" style="margin-bottom: 10px;">
-                        <label style="color: var(--uha-blue); font-size: 12px;">Format</label>
-                        <select id="format-select" class="uha-input" style="margin-bottom: 15px;">
-                            <option value="single_elim">Single Elimination</option>
-                            <option value="double_elim">Double Elimination</option>
-                            <option value="round_robin">Standard Round Robin</option>
-                            <option value="multi_group_rr">Multi-Group Round Robin</option>
-                        </select>
-                    </div>
-                    
+                    <label style="color: var(--uha-blue); font-size: 12px; display: block; margin-bottom: 5px;">Format</label>
+                    <select id="format-select" class="uha-input" style="margin-bottom: 15px;">
+                        <option value="single_elim">Single Elimination</option>
+                        <option value="double_elim">Double Elimination</option>
+                        <option value="round_robin">Standard Round Robin</option>
+                        <option value="multi_group_rr">Multi-Group Round Robin</option>
+                    </select>
+                </div>
+                
                     <div id="multi-group-settings" style="display:none; background: #111; padding: 10px; border: 1px solid #333; margin-bottom: 15px;">
                         <div style="font-size: 12px; color: var(--uha-gold); margin-bottom: 5px;">Group Settings</div>
                         <input type="number" id="num-groups" placeholder="# of Groups" class="uha-input" style="width: 45%; display: inline-block;">
