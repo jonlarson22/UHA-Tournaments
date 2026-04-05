@@ -285,19 +285,23 @@ window.unlockDivision = function(index) {
 
 // --- TOURNAMENT PREVIEW & BRACKET PROGRESSION LOGIC ---
 
-// Add this helper function to handle proper tournament seeding
+/**
+ * Helper: Takes an array of players/teams and returns Round 1 matchups 
+ * paired by ELO (1 vs 8, 2 vs 7, etc.) with BYEs handled automatically.
+ */
 function buildSeededMatchups(teams) {
     let numTeams = teams.length;
-    // Find the next power of 2 (2, 4, 8, 16, 32...)
-    let bracketSize = Math.pow(2, Math.ceil(Math.log2(numTeams)));
+    let bracketSize = Math.pow(2, Math.ceil(Math.log2(numTeams || 1)));
+    if (bracketSize < 2) bracketSize = 2;
     let byes = bracketSize - numTeams;
 
+    // Add "BYE" objects to pad the array to a power of 2
     let paddedTeams = [...teams];
     for(let i=0; i<byes; i++) {
         paddedTeams.push({ name: "BYE", isBye: true });
     }
 
-    // Standard Seeding Array generation (e.g., for 4: 0, 3, 1, 2 -> 1v4, 2v3)
+    // Generate the seed order (e.g., [0, 7, 3, 4, 1, 6, 2, 5] for 8 teams)
     let seeds = [0];
     for (let i = 1; i < Math.log2(bracketSize) + 1; i++) {
         let nextLevel = [];
@@ -324,22 +328,7 @@ function buildSeededMatchups(teams) {
     return matchups;
 }
 
-// Helper: Generates standard bracket seeding (e.g., [1, 8, 4, 5, 2, 7, 3, 6])
-function getSeedingStructure(powerOf2) {
-    let rounds = Math.log2(powerOf2);
-    let structure = [1];
-    for (let i = 0; i < rounds; i++) {
-        let nextStructure = [];
-        let sum = Math.pow(2, i + 1) + 1;
-        structure.forEach(seed => {
-            nextStructure.push(seed);
-            nextStructure.push(sum - seed);
-        });
-        structure = nextStructure;
-    }
-    return structure;
-}
-
+// --- START TOURNAMENT & PUSH TO LIVE ---
 document.getElementById('btn-start').addEventListener('click', () => {
     if (lockedDivisions.length === 0) {
         document.getElementById('btn-lock-division').click();
@@ -348,37 +337,36 @@ document.getElementById('btn-start').addEventListener('click', () => {
 
     lockedDivisions.forEach(division => {
         if (division.format === 'single_elim' && division.bracket.length === 0) {
+            // 1. Get the participants
             let p = [...division.participants];
+            
+            // 2. SORT BY ELO (Highest to Lowest)
+            p.sort((a, b) => (b.elo || 0) - (a.elo || 0));
+
+            // 3. Build Round 1 using the seeded helper
+            let round1 = buildSeededMatchups(p);
+
+            // 4. Calculate rounds and initialize the full bracket
             let nextPowerOf2 = Math.pow(2, Math.ceil(Math.log2(p.length || 1)));
             if(nextPowerOf2 < 2) nextPowerOf2 = 2;
-
-            let seeding = getSeedingStructure(nextPowerOf2);
             let roundsCount = Math.log2(nextPowerOf2);
-            let bracket = [];
-
-            // Initialize all empty rounds
-            for(let r=0; r<roundsCount; r++) {
+            
+            let bracket = [round1];
+            for(let r=1; r<roundsCount; r++) {
                 let matchesInRound = nextPowerOf2 / Math.pow(2, r+1);
                 bracket.push(Array.from({length: matchesInRound}, () => ({p1: null, p2: null, p1Wins: 0, p2Wins: 0, scores: '', winner: null})));
             }
 
-            // Populate Round 1 & Auto-Advance Byes
-            for(let i=0; i<seeding.length; i+=2) {
-                let mIdx = i/2;
-                let p1 = p[seeding[i]-1] || null;
-                let p2 = p[seeding[i+1]-1] || null;
-
-                bracket[0][mIdx].p1 = p1;
-                bracket[0][mIdx].p2 = p2;
-
-                if (p1 && !p2) {
-                    bracket[0][mIdx].scores = 'BYE';
-                    bracket[0][mIdx].winner = 'p1';
+            // 5. Progress any "BYE" winners automatically to Round 2
+            round1.forEach((match, mIdx) => {
+                if (match.scores === 'BYE' && match.winner && bracket[1]) {
+                    let advancer = match[match.winner]; 
                     let nextMIdx = Math.floor(mIdx / 2);
-                    if (mIdx % 2 === 0) bracket[1][nextMIdx].p1 = p1;
-                    else bracket[1][nextMIdx].p2 = p1;
-                } 
-            }
+                    if (mIdx % 2 === 0) bracket[1][nextMIdx].p1 = advancer;
+                    else bracket[1][nextMIdx].p2 = advancer;
+                }
+            });
+
             division.bracket = bracket;
         } 
         else if (division.format === 'round_robin' && division.bracket.length === 0) {
@@ -393,9 +381,15 @@ document.getElementById('btn-start').addEventListener('click', () => {
         }
     });
 
-    renderTournamentView();
-    document.getElementById('admin-dashboard').style.display = 'none';
-    document.getElementById('tournament-view').style.display = 'block';
+    // Save to Firebase
+    db.ref('tournaments/active').set({
+        updatedAt: firebase.database.ServerValue.TIMESTAMP,
+        divisions: lockedDivisions
+    }).then(() => {
+        document.getElementById('admin-dashboard').style.display = 'none';
+        document.getElementById('tournament-view').style.display = 'block';
+        renderTournamentView();
+    });
 });
 
 // --- STANDINGS CALCULATION (2-1-0 Logic & Tiebreakers) ---
