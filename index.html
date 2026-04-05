@@ -26,23 +26,22 @@
             
             <div class="column">
                 <div class="section-title">Configuration</div>
-                    <input type="text" id="division-name" placeholder="Enter Division Name" class="uha-input" style="margin-bottom: 15px; width: 100%;">
-                
-                <div class="mode-toggle">
+                    <div class="mode-toggle">
                     <button class="mode-btn active" id="btn-mode-singles">Singles</button>
                     <button class="mode-btn" id="btn-mode-doubles">Doubles</button>
-                </div>
-               
-                    <label style="color: var(--uha-blue); font-size: 14px; display: block; margin-bottom: 5px;">Format</label>                
+                    </div>
+            
                 <div class="input-group">
                     <select id="format-select" class="uha-input" style="margin-bottom: 5px;">
-                        <option value="single_elim">Single Elimination</option>
+                        <option value="single_elim">Straight Knockout</option>
                         <option value="double_elim">Double Elimination</option>
                         <option value="round_robin">Standard Round Robin</option>
                         <option value="multi_group_rr">Multi-Group Round Robin</option>
                     </select>
                 </div>
-                
+
+                <input type="text" id="division-name" placeholder="Enter Division Name" class="uha-input" style="margin-bottom: 15px; width: 100%;">
+                                
                     <div id="multi-group-settings" style="display:none; background: #111; padding: 10px; border: 1px solid #333; margin-bottom: 15px;">
                         <div style="font-size: 12px; color: var(--uha-gold); margin-bottom: 5px;">Group Settings</div>
                         <input type="number" id="num-groups" placeholder="# of Groups" class="uha-input" style="width: 45%; display: inline-block;">
@@ -62,12 +61,12 @@
                 <div class="section-title">Players</div>
                  
                 <div class="input-group">
-                    <input type="text" id="wildcard-name" placeholder="Wildcard Player Name" style="flex: 2; margin-bottom: 0;">
+                    <input type="text" id="wildcard-name" placeholder="Enter Wildcard Name" style="flex: 2; margin-bottom: 0;">
                     <input type="number" id="wildcard-elo" placeholder="ELO" value="1000" style="flex: 1; margin-bottom: 0;">
                     <button id="btn-add-wildcard" class="uha-btn" style="width: auto; padding: 10px;">+ Add</button>
                 </div>
                 
-                <input type="text" id="player-search" placeholder="UHA Player Search">
+                <input type="text" id="player-search" placeholder="UHA Player Search...">
                 <div id="player-list"></div>
             </div>
 
