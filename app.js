@@ -227,7 +227,7 @@ document.getElementById('btn-add-wildcard').addEventListener('click', () => {
 document.getElementById('btn-lock-division').addEventListener('click', () => {
     const nameInput = document.getElementById('division-name');
     const divName = nameInput ? nameInput.value : "Untitled Division";
-    const format = document.getElementById('tourney-type').value;
+    const format = document.getElementById('format-select').value;
     
     const participantElements = document.querySelectorAll('.singles-slot, .team-slot');
     if (participantElements.length < 2) return alert("Need at least 2 participants to lock a division.");
