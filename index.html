@@ -25,23 +25,15 @@
         <div class="setup-columns">
             
             <div class="column">
-                <div class="section-title">Configuration & Wildcards</div>
+                <div class="section-title">Configuration</div>
+                    <input type="text" id="division-name" placeholder="Enter Division Name" class="uha-input" style="margin-bottom: 15px; width: 100%;">
+                
                 <div class="mode-toggle">
                     <button class="mode-btn active" id="btn-mode-singles">Singles</button>
                     <button class="mode-btn" id="btn-mode-doubles">Doubles</button>
                 </div>
-                
-                <div class="input-group">
-                    <input type="text" id="wildcard-name" placeholder="Player Name" style="flex: 2; margin-bottom: 0;">
-                    <input type="number" id="wildcard-elo" placeholder="ELO" value="1000" style="flex: 1; margin-bottom: 0;">
-                    <button id="btn-add-wildcard" class="uha-btn" style="width: auto; padding: 10px;">+ Add</button>
-                </div>
-
-                <div class="section-title" style="margin-top: 30px;">Divisions</div>
-
-                <input type="text" id="division-name" placeholder="Enter Division Name" class="uha-input" style="margin-bottom: 20px; width: 100%;">
-
-                    <label style="color: var(--uha-blue); font-size: 12px; display: block; margin-bottom: 5px;">Format</label>                
+               
+                    <label style="color: var(--uha-blue); font-size: 14px; display: block; margin-bottom: 5px;">Format</label>                
                 <div class="input-group">
                     <select id="format-select" class="uha-input" style="margin-bottom: 5px;">
                         <option value="single_elim">Single Elimination</option>
@@ -68,7 +60,14 @@
 
             <div class="column">
                 <div class="section-title">Players</div>
-                <input type="text" id="player-search" placeholder="Search Players...">
+                 
+                <div class="input-group">
+                    <input type="text" id="wildcard-name" placeholder="Wildcard Player Name" style="flex: 2; margin-bottom: 0;">
+                    <input type="number" id="wildcard-elo" placeholder="ELO" value="1000" style="flex: 1; margin-bottom: 0;">
+                    <button id="btn-add-wildcard" class="uha-btn" style="width: auto; padding: 10px;">+ Add</button>
+                </div>
+                
+                <input type="text" id="player-search" placeholder="UHA Player Search">
                 <div id="player-list"></div>
             </div>
 
