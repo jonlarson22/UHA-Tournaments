@@ -93,6 +93,10 @@ let lockedDivisions = [];
 
 // Ensure panels display correctly based on Admin state
 function updateVisibility() {
+    const archiveBtn = document.getElementById('btn-archive');
+    if (isAdmin) {
+        if (archiveBtn) archiveBtn.style.display = 'block';
+        
     const resetBtn = document.getElementById('btn-reset');
     
     if (isAdmin) {
@@ -679,6 +683,71 @@ function progressBracket(divIdx, rIdx, mIdx) {
         else div.bracket[nextRIdx][nextMIdx].p2 = winner;
     }
 }
+
+window.archiveTournament = function() {
+    if (!isAdmin) return;
+    if (!confirm("Are you sure you want to archive this tournament? It will move to the public history and become read-only.")) return;
+
+    const archiveID = "tourney_" + Date.now(); // Unique ID for the archive
+    
+    // 1. Get the current active data
+    db.ref('tournaments/active').once('value').then((snapshot) => {
+        const data = snapshot.val();
+        if (!data) return alert("No active tournament found to archive.");
+
+        // 2. Push to archived section
+        return db.ref('tournaments/archived/' + archiveID).set(data);
+    }).then(() => {
+        // 3. Clear the active tournament
+        return db.ref('tournaments/active').remove();
+    }).then(() => {
+        alert("Tournament archived successfully.");
+        location.reload();
+    }).catch(e => console.error("Archive failed:", e));
+};
+
+// Function to populate the dropdown with archived tournaments
+function loadArchiveList() {
+    const selector = document.getElementById('public-tournament-selector');
+    
+    db.ref('tournaments/archived').once('value', (snapshot) => {
+        const archives = snapshot.val();
+        if (!archives) return;
+
+        // Keep the "Active" option, then add the archives
+        selector.innerHTML = '<option value="active">Current Live Tournament</option>';
+        
+        Object.keys(archives).forEach(key => {
+            const date = new Date(archives[key].updatedAt).toLocaleDateString();
+            const option = document.createElement('option');
+            option.value = 'archived/' + key;
+            option.textContent = `Past Event - ${date}`;
+            selector.appendChild(option);
+        });
+    });
+}
+
+// Listener for the dropdown to switch views
+document.getElementById('public-tournament-selector').addEventListener('change', (e) => {
+    const path = e.target.value; // e.g., "active" or "archived/tourney_123"
+    loadTournamentData(path);
+});
+
+function loadTournamentData(path) {
+    db.ref('tournaments/' + path).on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.divisions) {
+            lockedDivisions = data.divisions;
+            renderTournamentView(); // This renders the bracket to the screen
+        } else {
+            document.getElementById('public-bracket-container').innerHTML = "No tournament data found for this selection.";
+        }
+    });
+}
+
+// Initial load
+loadArchiveList();
+loadTournamentData('active');
 
 // Initialize
 refreshRosterFromDB();
