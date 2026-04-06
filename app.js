@@ -619,24 +619,5 @@ function progressBracket(divIdx, rIdx, mIdx) {
     }
 }
 
-document.getElementById('btn-start').addEventListener('click', () => {
-    if (lockedDivisions.length === 0) {
-        return alert("You need to lock at least one division first!");
-    }
-
-    // Push to Firebase Realtime Database
-    db.ref('tournaments/active').set({
-        updatedAt: firebase.database.ServerValue.TIMESTAMP,
-        divisions: lockedDivisions
-    }).then(() => {
-        alert("Tournament saved to database and pushed live!");
-        document.getElementById('admin-dashboard').style.display = 'none';
-        document.getElementById('tournament-view').style.display = 'flex';
-        renderTournamentView();
-    }).catch((error) => {
-        alert("Firebase Save Error: " + error.message);
-    });
-});
-
 // Initialize
 refreshRosterFromDB();
