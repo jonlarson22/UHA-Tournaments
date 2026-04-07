@@ -610,10 +610,11 @@ window.saveScore = function() {
     const tName = document.getElementById('tourney-title').innerText;
 
     db.ref('tournaments/active').set({
-        name: tName, // <-- ADD THIS LINE
+        name: tName, 
         updatedAt: firebase.database.ServerValue.TIMESTAMP,
         divisions: lockedDivisions
     }).catch(e => console.error("Firebase auto-save failed:", e));
+};
 
 function wipeForwardBracket(divIdx, rIdx, mIdx) {
     let div = lockedDivisions[divIdx];
