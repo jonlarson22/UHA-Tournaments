@@ -84,9 +84,20 @@
     </section>
 
     <section id="tournament-view" style="display:none;" class="column">
-        <div class="section-title" id="tourney-title">Live Tournament</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+            <div class="section-title" id="tourney-title" style="margin-bottom: 0; border: none; padding-bottom: 0;">Live Tournament</div>
+            
+            <select id="public-tournament-selector" class="uha-input" style="width: auto; min-width: 220px; margin-bottom: 0;">
+                <option value="active">Current Live Tournament</option>
+            </select>
+        </div>
+        
         <div id="matchup-container"></div>
-        <button id="btn-reset" onclick="location.reload()" class="uha-btn-outline" style="margin-top: 20px;">Reset / Back to Setup</button>
+        
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
+            <button id="btn-reset" onclick="location.reload()" class="uha-btn-outline" style="flex: 1;">Back to Setup / Refresh</button>
+            <button id="btn-archive" class="uha-btn-outline" onclick="archiveTournament()" style="display:none; flex: 1; border-color: var(--uha-gold); color: var(--uha-gold);">Archive Finished Tournament</button>
+        </div>
     </section>
 </div>
 
