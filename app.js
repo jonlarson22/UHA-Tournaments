@@ -512,9 +512,6 @@ function generateMatchCardHTML(match, divIdx, rIdx, mIdx) {
         actionArea = `<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:8px;">Archived - Read Only</div>`;
     } else if (teamA === "BYE" || teamB === "BYE") {
         actionArea = `<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:8px;">Auto-Advance</div>`;
-    
-    if (teamA === "BYE" || teamB === "BYE") {
-        actionArea = `<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:8px;">Auto-Advance</div>`;
     } else if (!hasScore) {
         actionArea = `<button class="uha-btn" style="width:auto; padding:8px 15px;" onclick="openScoreModal(${divIdx}, ${rIdx}, ${mIdx})">Enter Score</button>`;
     } else if (hasScore && isAdmin) {
