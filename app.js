@@ -17,6 +17,7 @@ let allPlayers = [];
 let isDoublesMode = false;
 let isAdmin = false;
 let lockedDivisions = [];
+let isViewingArchive = false;
 
 // --- FIREBASE AUTHENTICATION & LIVE DATA ---
 document.getElementById('header-title').addEventListener('click', () => {
@@ -506,6 +507,12 @@ function generateMatchCardHTML(match, divIdx, rIdx, mIdx) {
     let scoreB = hasScore ? `[${match.p2Wins}]` : '';
 
     let actionArea = '';
+
+    if (isViewingArchive) {
+        actionArea = `<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:8px;">Archived - Read Only</div>`;
+    } else if (teamA === "BYE" || teamB === "BYE") {
+        actionArea = `<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:8px;">Auto-Advance</div>`;
+    
     if (teamA === "BYE" || teamB === "BYE") {
         actionArea = `<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:8px;">Auto-Advance</div>`;
     } else if (!hasScore) {
@@ -652,20 +659,24 @@ function progressBracket(divIdx, rIdx, mIdx) {
 
 window.archiveTournament = function() {
     if (!isAdmin) return;
-    if (!confirm("Are you sure you want to archive this tournament? It will move to the public history and become read-only.")) return;
-
-    const archiveID = "tourney_" + Date.now();
     
+    // 1. Fetch the active tournament data first
     db.ref('tournaments/active').once('value').then((snapshot) => {
         const data = snapshot.val();
         if (!data) return alert("No active tournament found to archive.");
 
-        return db.ref('tournaments/archived/' + archiveID).set(data);
-    }).then(() => {
-        return db.ref('tournaments/active').remove();
-    }).then(() => {
-        alert("Tournament archived successfully.");
-        location.reload();
+        // 2. Identify it and Ask for Confirmation
+        const tName = data.name || "Untitled Tournament";
+        if (!confirm(`Are you sure you want to archive "${tName}"?\n\nIt will be moved to history and become read-only. This will clear the dashboard for a new event.`)) return;
+
+        // 3. Move it and delete the active node
+        const archiveID = "tourney_" + Date.now();
+        return db.ref('tournaments/archived/' + archiveID).set(data).then(() => {
+            return db.ref('tournaments/active').remove();
+        }).then(() => {
+            alert(`"${tName}" archived successfully.`);
+            location.reload();
+        });
     }).catch(e => console.error("Archive failed:", e));
 };
 
@@ -710,5 +721,31 @@ function loadTournamentData(path) {
 }
 
 // --- INITIALIZE ---
+
+// 1. Attach the listener to the dropdown so it actually does something when clicked
+const pubSelector = document.getElementById('public-tournament-selector');
+if (pubSelector) {
+    pubSelector.addEventListener('change', (e) => {
+        const path = e.target.value; // This will be 'active' or 'archived/unique_id'
+        
+        // Update the global state so match cards know to be "Read Only"
+        isViewingArchive = path.startsWith('archived');
+        
+        // Only show the Archive button if we are Admin AND looking at the live event
+        const archiveBtn = document.getElementById('btn-archive');
+        if (archiveBtn) {
+            archiveBtn.style.display = (isAdmin && !isViewingArchive) ? 'block' : 'none';
+        }
+        
+        // Clear old Firebase listeners before switching to the new tournament path
+        db.ref('tournaments').off(); 
+        loadTournamentData(path);
+    });
+}
+
+// 2. Run the initial data fetches
 loadArchiveList();
 refreshRosterFromDB();
+
+// 3. Kick things off by loading the active tournament by default
+loadTournamentData('active');
