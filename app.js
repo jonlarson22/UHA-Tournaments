@@ -377,16 +377,20 @@ document.getElementById('btn-start').addEventListener('click', () => {
             division.bracket = [matches]; 
         }
     });
+// Grab the name from the new input field
+    const tName = document.getElementById('tournament-name').value || "Untitled Tournament";
 
     db.ref('tournaments/active').set({
+        name: tName, // <-- ADD THIS LINE
         updatedAt: firebase.database.ServerValue.TIMESTAMP,
         divisions: lockedDivisions
     }).then(() => {
         document.getElementById('admin-dashboard').style.display = 'none';
         document.getElementById('tournament-view').style.display = 'block';
+        // Set the title on the screen immediately
+        document.getElementById('tourney-title').innerText = tName; 
         renderTournamentView();
     }).catch((e) => alert("Error: " + e.message));
-});
 
 // --- STANDINGS CALCULATION (2-1-0 Logic & Tiebreakers) ---
 function calculateStandings(players, matches) {
@@ -603,11 +607,13 @@ window.saveScore = function() {
     renderTournamentView();
     closeScoreModal();
 
+    const tName = document.getElementById('tourney-title').innerText;
+
     db.ref('tournaments/active').set({
+        name: tName, // <-- ADD THIS LINE
         updatedAt: firebase.database.ServerValue.TIMESTAMP,
         divisions: lockedDivisions
     }).catch(e => console.error("Firebase auto-save failed:", e));
-};
 
 function wipeForwardBracket(divIdx, rIdx, mIdx) {
     let div = lockedDivisions[divIdx];
@@ -673,19 +679,14 @@ function loadArchiveList() {
         selector.innerHTML = '<option value="active">Current Live Tournament</option>';
         
         Object.keys(archives).forEach(key => {
-            const date = new Date(archives[key].updatedAt).toLocaleDateString();
+            const tourney = archives[key];
+            const date = new Date(tourney.updatedAt).toLocaleDateString();
+            const name = tourney.name || "Past Event"; // Grab the saved name
             const option = document.createElement('option');
             option.value = 'archived/' + key;
-            option.textContent = `Past Event - ${date}`;
+            option.textContent = `${name} (${date})`; // Display the name in the dropdown
             selector.appendChild(option);
         });
-    });
-}
-
-const pubSelector = document.getElementById('public-tournament-selector');
-if(pubSelector) {
-    pubSelector.addEventListener('change', (e) => {
-        loadTournamentData(e.target.value);
     });
 }
 
@@ -694,6 +695,10 @@ function loadTournamentData(path) {
         const data = snapshot.val();
         if (data && data.divisions) {
             lockedDivisions = data.divisions;
+            // Update the big header title on the screen
+            const titleEl = document.getElementById('tourney-title');
+            if(titleEl) titleEl.innerText = data.name || "Live Tournament";
+            
             renderTournamentView(); 
         } else {
             const container = document.getElementById('matchup-container');
