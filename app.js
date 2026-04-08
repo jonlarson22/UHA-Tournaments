@@ -682,21 +682,25 @@ function loadArchiveList() {
     const selector = document.getElementById('public-tournament-selector');
     if (!selector) return;
 
-    db.ref('tournaments/archived').once('value', (snapshot) => {
+    // Use .on to keep the list updated in real-time
+    db.ref('tournaments/archived').on('value', (snapshot) => {
         const archives = snapshot.val();
-        if (!archives) return;
-
+        
+        // Reset to default option
         selector.innerHTML = '<option value="active">Current Live Tournament</option>';
         
+        if (!archives) return;
+
         Object.keys(archives).forEach(key => {
             const tourney = archives[key];
             const date = new Date(tourney.updatedAt).toLocaleDateString();
-            const name = tourney.name || "Past Event"; // Grab the saved name
+            const name = tourney.name || "Past Event";
             const option = document.createElement('option');
             option.value = 'archived/' + key;
-            option.textContent = `${name} (${date})`; // Display the name in the dropdown
+            option.textContent = `${name} (${date})`;
             selector.appendChild(option);
         });
+        console.log("Archives loaded:", Object.keys(archives).length);
     });
 }
 
@@ -716,6 +720,29 @@ function loadTournamentData(path) {
         }
     });
 }
+
+window.editActiveTournament = function() {
+    if (!confirm("This will pull the current live tournament back into the setup area. You can then 'Unlock' divisions to edit players. Ready?")) return;
+
+    db.ref('tournaments/active').once('value').then((snapshot) => {
+        const data = snapshot.val();
+        if (!data || !data.divisions) return alert("No active tournament found to edit.");
+
+        // 1. Load the data back into our working variables
+        lockedDivisions = data.divisions;
+        document.getElementById('tournament-name').value = data.name || "";
+
+        // 2. Switch the view back to the setup dashboard
+        document.getElementById('admin-dashboard').style.display = 'block';
+        document.getElementById('tournament-view').style.display = 'none';
+
+        // 3. Refresh the setup UI
+        renderLockedDivisions();
+        renderRoster();
+        
+        alert("Setup reloaded. Use the 'Unlock' buttons below to make changes to specific divisions.");
+    });
+};
 
 // --- INITIALIZE ---
 
