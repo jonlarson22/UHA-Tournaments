@@ -27,18 +27,23 @@ document.getElementById('header-title').addEventListener('click', () => {
 });
 
 firebase.auth().onAuthStateChanged((user) => {
+    const safeDisplay = (id, displayStyle) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = displayStyle;
+    };
+
     if (user) {
         isAdmin = true;
-        document.getElementById('btn-logout').style.display = 'block';
-        document.getElementById('admin-dashboard').style.display = 'block';
-        document.getElementById('public-viewer').style.display = 'none';
-        document.getElementById('tournament-view').style.display = 'none'; 
+        safeDisplay('btn-logout', 'block');
+        safeDisplay('admin-dashboard', 'block');
+        safeDisplay('public-viewer', 'none');
+        safeDisplay('tournament-view', 'none'); 
     } else {
         isAdmin = false;
-        document.getElementById('btn-logout').style.display = 'none';
-        document.getElementById('admin-dashboard').style.display = 'none';
-        document.getElementById('public-viewer').style.display = 'none'; 
-        document.getElementById('tournament-view').style.display = 'block';
+        safeDisplay('btn-logout', 'none');
+        safeDisplay('admin-dashboard', 'none');
+        safeDisplay('public-viewer', 'none'); 
+        safeDisplay('tournament-view', 'block');
         loadTournamentData('active');
     }
     updateVisibility();
