@@ -679,7 +679,7 @@ window.saveScore = function() {
         detailedGames: detailedGames
     };
 
-    db.ref('pendingMatches').push(pendingMatch);
+    db.ref('pending').push(pendingMatch);
     
     progressBracket(divIdx, rIdx, mIdx);
     renderTournamentView();
