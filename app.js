@@ -253,10 +253,20 @@ document.getElementById('btn-lock-division').addEventListener('click', () => {
     const participantElements = document.querySelectorAll('.singles-slot, .team-slot');
     if (participantElements.length < 2) return alert("Need at least 2 participants to lock a division.");
 
-    const participants = Array.from(participantElements).map(el => ({
-        name: el.dataset.finalName,
-        elo: parseInt(el.dataset.finalElo)
-    }));
+   const participants = Array.from(participantElements).map(el => {
+        const idElements = el.querySelectorAll('.drafted-id');
+        const ids = Array.from(idElements).map(idEl => {
+            const rawId = idEl.dataset.id;
+            // Keep wildcards as strings, convert standard IDs to numbers
+            return rawId.startsWith('wildcard') ? rawId : Number(rawId);
+        });
+
+        return {
+            name: el.dataset.finalName,
+            elo: parseInt(el.dataset.finalElo),
+            ids: ids 
+        };
+    });
 
     lockedDivisions.push({
         name: divName || "Untitled Division",
@@ -295,10 +305,15 @@ window.unlockDivision = function(index) {
         slot.className = divToUnlock.mode === "Singles" ? 'singles-slot' : 'team-slot';
         slot.dataset.finalName = p.name;
         slot.dataset.finalElo = p.elo;
+        
+        // Rebuild the hidden ID divs
+        let idHtml = p.ids.map(id => `<div class="drafted-id" data-id="${id}" style="display:none;"></div>`).join('');
+
         slot.innerHTML = `
             <div style="font-weight: bold;">
                 ${p.name} <span style="color:var(--uha-blue); margin-left:10px;">${Math.round(p.elo)}</span>
             </div>
+            ${idHtml}
             <button class="remove-team-btn">X</button>
         `;
         teamDraftArea.appendChild(slot);
@@ -637,6 +652,34 @@ window.saveScore = function() {
     match.p2Wins = p2Wins;
     match.winner = p1Wins > p2Wins ? 'p1' : 'p2';
 
+    // --- BUILD PENDING MATCH FOR ELO ENGINE ---
+    const winningTeam = match.winner === 'p1' ? match.p1 : match.p2;
+    const losingTeam = match.winner === 'p1' ? match.p2 : match.p1;
+
+    let detailedGames = [];
+    for(let i=0; i<3; i++) {
+        let s1 = parseInt(p1Inputs[i].value);
+        let s2 = parseInt(p2Inputs[i].value);
+
+        if (!isNaN(s1) && !isNaN(s2)) {
+            // 'w' is the match winner's score for this specific game, 'l' is the match loser's
+            let wScore = match.winner === 'p1' ? s1 : s2;
+            let lScore = match.winner === 'p1' ? s2 : s1;
+            detailedGames.push({ w: wScore, l: lScore });
+        }
+    }
+
+    const pendingMatch = {
+        id: Date.now(),
+        mode: div.mode.toLowerCase(), 
+        score: `${Math.max(p1Wins, p2Wins)}-${Math.min(p1Wins, p2Wins)}`,
+        winners: winningTeam.ids,
+        losers: losingTeam.ids,
+        detailedGames: detailedGames
+    };
+
+    db.ref('pendingMatches').push(pendingMatch);
+    
     progressBracket(divIdx, rIdx, mIdx);
     renderTournamentView();
     closeScoreModal();
