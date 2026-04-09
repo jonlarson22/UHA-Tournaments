@@ -66,10 +66,16 @@
             <div class="column">
                 <div class="section-title">Players</div>
                  
-                <div class="input-group">
-                    <input type="text" id="wildcard-name" placeholder="Enter Wildcard Name" style="flex: 2; margin-bottom: 0;">
-                    <input type="number" id="wildcard-elo" placeholder="ELO" value="1000" style="flex: 1; margin-bottom: 0;">
-                    <button id="btn-add-wildcard" class="uha-btn" style="width: auto; padding: 10px;">+ Add</button>
+                <div class="input-group" style="flex-wrap: wrap; background: #1a1a1a; padding: 10px; border-radius: 6px; border: 1px solid #333;">
+                    <input type="text" id="new-player-name" placeholder="New Player Name" style="flex: 2; min-width: 150px; margin-bottom: 5px;">
+                    <input type="number" id="new-player-elo" placeholder="Est. ELO" value="1000" style="flex: 1; min-width: 80px; margin-bottom: 5px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <input type="checkbox" id="new-player-member" checked style="width: auto; margin: 0; cursor: pointer;">
+                            <label for="new-player-member" style="font-size: 12px; color: var(--text-muted); cursor: pointer;">UHA Member</label>
+                        </div>
+                        <button id="btn-add-player" class="uha-btn" style="width: auto; padding: 8px 15px;">+ Add to Database</button>
+                    </div>
                 </div>
                 
                 <input type="text" id="player-search" placeholder="UHA Player Search...">
