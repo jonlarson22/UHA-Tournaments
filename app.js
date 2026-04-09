@@ -663,9 +663,9 @@ window.saveScore = function() {
         detailedGames: detailedGames
     };
 
-    db.ref('pendingMatches').push(pendingMatch)
-        .then(() => console.log("Match successfully added to pendingMatches queue."))
-        .catch(e => console.error("Firebase Rules blocked pendingMatches write:", e));
+    db.ref('pending').push(pendingMatch)
+    .then(() => console.log("Match successfully added to pending queue."))
+    .catch(e => console.error("Firebase Rules blocked pending write:", e));
 
     progressBracket(divIdx, rIdx, mIdx);
     renderTournamentView();
