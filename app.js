@@ -227,21 +227,41 @@ function updateTeamElo(teamDiv) {
     teamDiv.dataset.finalElo = avgElo;
 }
 
-document.getElementById('btn-add-wildcard').addEventListener('click', () => {
-    const nameStr = document.getElementById('wildcard-name').value;
-    const eloVal = document.getElementById('wildcard-elo').value;
+document.getElementById('btn-add-player').addEventListener('click', () => {
+    const nameStr = document.getElementById('new-player-name').value.trim();
+    const eloVal = parseFloat(document.getElementById('new-player-elo').value) || 1000;
+    const isMember = document.getElementById('new-player-member').checked;
     
-    if (!nameStr) return alert("Enter a wildcard name");
+    if (!nameStr) return alert("Enter a player name");
+    
+    if (allPlayers.some(p => p.name.toLowerCase() === nameStr.toLowerCase())) {
+        return alert("Player already exists in the database.");
+    }
 
-    const fakePlayerItem = document.createElement('div');
-    fakePlayerItem.className = 'player-item';
-    fakePlayerItem.dataset.id = 'wildcard_' + Date.now();
-    fakePlayerItem.dataset.name = nameStr;
-    fakePlayerItem.dataset.elo = eloVal || 1000;
+    const newPlayer = {
+        id: Date.now(),
+        name: nameStr,
+        singles: eloVal,
+        doubles: eloVal,
+        baseS: eloVal,
+        baseD: eloVal,
+        peakS: eloVal,
+        peakD: eloVal,
+        active: true,
+        isMember: isMember
+    };
 
-    playerListDiv.appendChild(fakePlayerItem);
-    fakePlayerItem.click(); 
-    document.getElementById('wildcard-name').value = '';
+    allPlayers.push(newPlayer);
+    db.ref('players').set(allPlayers)
+        .then(() => {
+            document.getElementById('new-player-name').value = '';
+            document.getElementById('new-player-elo').value = '1000';
+            document.getElementById('new-player-member').checked = true;
+
+            searchInput.value = nameStr;
+            refreshRosterFromDB(); 
+        })
+        .catch(e => alert("Error adding player: " + e.message));
 });
 
 document.getElementById('btn-lock-division').addEventListener('click', () => {
@@ -255,9 +275,8 @@ document.getElementById('btn-lock-division').addEventListener('click', () => {
    const participants = Array.from(participantElements).map(el => {
         const idElements = el.querySelectorAll('.drafted-id');
         const ids = Array.from(idElements).map(idEl => {
-            const rawId = idEl.dataset.id;
-            return rawId.startsWith('wildcard') ? rawId : Number(rawId);
-        });
+            return Number(idEl.dataset.id);
+    });
 
         return {
             name: el.dataset.finalName,
