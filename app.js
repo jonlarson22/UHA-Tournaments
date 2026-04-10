@@ -568,6 +568,19 @@ function generateMatchCardHTML(match, divIdx, rIdx, mIdx) {
     let scoreA = hasScore ? `[${match.p1Wins}]` : '';
     let scoreB = hasScore ? `[${match.p2Wins}]` : '';
 
+    let classA = "";
+    let classB = "";
+
+    if (hasScore) {
+        if (match.p1Wins > match.p2Wins) {
+            classA = "text-win";
+            classB = "text-lose";
+        } else if (match.p2Wins > match.p1Wins) {
+            classA = "text-lose";
+            classB = "text-win";
+        }
+    }
+
     let actionArea = '';
 
     if (isViewingArchive) {
@@ -585,19 +598,19 @@ function generateMatchCardHTML(match, divIdx, rIdx, mIdx) {
     return `
         <div class="match-card">
             <div style="flex:1;">
-                <div class="match-team">
+                <div class="match-team ${classA}">
                     <span>${teamA}</span>
-                    <span style="color:var(--uha-blue);">${scoreA}</span>
+                    <span>${scoreA}</span>
                 </div>
 
                 <div class="match-vs">vs</div>
 
-                <div class="match-team">
+                <div class="match-team ${classB}">
                     <span>${teamB}</span>
-                    <span style="color:var(--uha-blue);">${scoreB}</span>
+                    <span>${scoreB}</span>
                 </div>
 
-                ${hasScore ? `<div style="text-align:center; font-size:11px; color:#888; margin-top:8px; border-top: 1px solid #2a2a2a; pt: 5px;">${match.scores}</div>` : ''}
+                ${hasScore ? `<div style="text-align:center; font-size:11px; color:#888; margin-top:8px; border-top: 1px solid #2a2a2a; padding-top: 5px;">${match.scores}</div>` : ''}
             </div>
             <div style="margin-top: 10px; display: flex; justify-content: center;">
                 ${actionArea}
