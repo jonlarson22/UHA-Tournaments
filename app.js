@@ -691,6 +691,7 @@ function renderTournamentView() {
                     html += `</div></div>`; 
                 }); 
                 html += `</div></div>`;
+            }
             
         } else if (div.format === 'round_robin' || div.format === 'multi_group_rr') {
 
