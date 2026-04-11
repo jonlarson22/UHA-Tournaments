@@ -33,14 +33,21 @@
                     <button class="mode-btn" id="btn-mode-doubles">Doubles</button>
                     </div>
             
-                <div class="input-group">
-                    <select id="format-select" class="uha-input">
-                        <option value="single_elim">Straight Knockout</option>
-                        <option value="double_elim">Double Elimination Knockout</option>
-                        <option value="round_robin">Standard Round Robin to Knockout</option>
-                        <option value="multi_group_rr">Multi-Group Round Robin to Knockout</option>
+                <div class="section-title">Format</div>
+                    <select id="division-format" class="uha-input" style="width: 100%; margin-bottom: 10px;" onchange="toggleFormatOptions()">
+                        <option value="single_elim">Single Elimination Knockout</option>
+                        <option value="double_elim">Double Elimination</option>
+                        <option value="round_robin">Standard Round Robin (1 Group)</option>
+                        <option value="multi_group_rr">Multi-Group Round Robin</option>
                     </select>
-                </div>
+                    
+                    <div id="double-elim-settings" style="display: none; background: #222; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 3px solid var(--uha-red);">
+                        <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 5px;">Grand Final Rules:</div>
+                        <select id="double-elim-final" class="uha-input" style="width: 100%;">
+                            <option value="true_double">True Double Elimination</option>
+                            <option value="one_match">Winner Takes All Final</option>
+                        </select>
+                    </div>
 
                 <input type="text" id="division-name" placeholder="Enter Division Name" class="uha-input" style="margin-bottom: 15px; width: 100%;">
                                                 
