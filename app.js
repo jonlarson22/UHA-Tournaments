@@ -101,14 +101,14 @@ document.getElementById('btn-mode-doubles').addEventListener('click', (e) => {
     renderRoster();
 });
 
-document.getElementById('format-select').addEventListener('change', (e) => {
-    const multiGroupSettings = document.getElementById('multi-group-settings');
-    if (e.target.value === 'multi_group_rr') {
-        multiGroupSettings.style.display = 'block';
-    } else {
-        multiGroupSettings.style.display = 'none';
-    }
-});
+window.toggleFormatOptions = function() {
+    const format = document.getElementById('division-format').value;
+    const multiSettings = document.getElementById('multi-group-settings');
+    const doubleSettings = document.getElementById('double-elim-settings');
+
+    if (multiSettings) multiSettings.style.display = (format === 'multi_group_rr') ? 'block' : 'none';
+    if (doubleSettings) doubleSettings.style.display = (format === 'double_elim') ? 'block' : 'none';
+};
 
 function refreshRosterFromDB() {
     db.ref('players').once('value', (snapshot) => {
@@ -269,7 +269,7 @@ document.getElementById('btn-add-player').addEventListener('click', () => {
             document.getElementById('new-player-doubles').value = '1000';
             document.getElementById('new-player-member').checked = true;
 
-            const searchInput = document.getElementById('player-search'); // Ensure this ID matches your HTML
+            const searchInput = document.getElementById('player-search');
             if (searchInput) searchInput.value = nameStr;
             refreshRosterFromDB(); 
         })
@@ -279,7 +279,9 @@ document.getElementById('btn-add-player').addEventListener('click', () => {
 document.getElementById('btn-lock-division').addEventListener('click', () => {
     const nameInput = document.getElementById('division-name');
     const divName = nameInput ? nameInput.value : "Untitled Division";
-    const format = document.getElementById('format-select').value;
+    const format = document.getElementById('division-format').value;
+    const finalRuleEl = document.getElementById('double-elim-final');
+    const finalRule = finalRuleEl ? finalRuleEl.value : 'true_double';
     
     const participantElements = document.querySelectorAll('.singles-slot, .team-slot');
     if (participantElements.length < 2) return alert("Need at least 2 participants to lock a division.");
@@ -301,6 +303,7 @@ document.getElementById('btn-lock-division').addEventListener('click', () => {
         name: divName || "Untitled Division",
         format: format,
         mode: isDoublesMode ? "Doubles" : "Singles",
+        grandFinalRule: finalRule,
         participants: participants,
         bracket: [] 
     });
