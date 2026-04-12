@@ -457,26 +457,49 @@ document.getElementById('btn-start').addEventListener('click', () => {
                 wBracket.push(Array.from({length: matchesInRound}, () => ({p1: null, p2: null, p1Wins: 0, p2Wins: 0, scores: '', winner: null})));
             }
 
+            let losersRoundsCount = (winnersRoundsCount * 2) - 2;
+            let lBracket = [];
+            let currentLoserMatches = Math.max(1, nextPowerOf2 / 4); 
+            
+            for (let r = 0; r < losersRoundsCount; r++) {
+                if (r > 0 && r % 2 === 0) {
+                    currentLoserMatches = Math.floor(currentLoserMatches / 2);
+                }
+                lBracket.push(Array.from({length: Math.max(1, currentLoserMatches)}, () => ({p1: null, p2: null, p1Wins: 0, p2Wins: 0, scores: '', winner: null, isLosers: true})));
+            }
+
+            wBracket.forEach((round, rIdx) => {
+                round.forEach((match, mIdx) => {
+                    if (rIdx === 0) {
+                        match.loserDest = {
+                            rIdx: 0,
+                            mIdx: Math.floor(mIdx / 2),
+                            slot: mIdx % 2 === 0 ? 'p1' : 'p2'
+                        };
+                    } else {
+                        match.loserDest = {
+                            rIdx: (rIdx * 2) - 1,
+                            mIdx: mIdx,
+                            slot: 'p2'
+                        };
+                    }
+                });
+            });
+
             round1.forEach((match, mIdx) => {
                 if (match.scores === 'BYE' && match.winner && wBracket[1]) {
                     let advancer = match[match.winner]; 
+                    let loser = match.winner === 'p1' ? match.p2 : match.p1;
+                    
                     let nextMIdx = Math.floor(mIdx / 2);
                     if (mIdx % 2 === 0) wBracket[1][nextMIdx].p1 = advancer;
                     else wBracket[1][nextMIdx].p2 = advancer;
+
+                    if (match.loserDest && lBracket[match.loserDest.rIdx]) {
+                        lBracket[match.loserDest.rIdx][match.loserDest.mIdx][match.loserDest.slot] = loser;
+                    }
                 }
             });
-
-            let losersRoundsCount = (winnersRoundsCount * 2) - 2;
-            let lBracket = [];
-
-            let currentLoserMatches = nextPowerOf2 / 2; 
-            for (let r = 0; r < losersRoundsCount; r++) {
-
-                if (r > 0 && r % 2 === 0) {
-                    currentLoserMatches = currentLoserMatches / 2;
-                }
-                lBracket.push(Array.from({length: currentLoserMatches}, () => ({p1: null, p2: null, p1Wins: 0, p2Wins: 0, scores: '', winner: null, isLosers: true})));
-            }
 
             division.bracket = wBracket;
             division.losersBracket = lBracket;
@@ -786,7 +809,7 @@ function renderTournamentView() {
     if (container) container.innerHTML = html;
 }
 
-function generateMatchCardHTML(match, divIdx, rIdx, mIdx) {
+function generateMatchCardHTML(match, divIdx, rIdx, mIdx, bracketType = 'winners') {
     let teamA = match.p1 ? match.p1.name : "BYE";
     let teamB = match.p2 ? match.p2.name : "BYE";
     
@@ -816,9 +839,9 @@ function generateMatchCardHTML(match, divIdx, rIdx, mIdx) {
     } else if (teamA === "BYE" || teamB === "BYE") {
         actionArea = `<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:8px;">Auto-Advance</div>`;
     } else if (!hasScore) {
-        actionArea = `<button class="uha-btn" style="width:auto; padding:8px 15px;" onclick="openScoreModal(${divIdx}, ${rIdx}, ${mIdx})">Enter Score</button>`;
+        actionArea = `<button class="uha-btn" style="width:auto; padding:8px 15px;" onclick="openScoreModal(${divIdx}, ${rIdx}, ${mIdx}, '${bracketType}')">Enter Score</button>`;
     } else if (hasScore && isAdmin) {
-        actionArea = `<button class="uha-btn uha-btn-outline" style="width:auto; padding:8px 15px;" onclick="openScoreModal(${divIdx}, ${rIdx}, ${mIdx})">Edit Score</button>`;
+        actionArea = `<button class="uha-btn uha-btn-outline" style="width:auto; padding:8px 15px;" onclick="openScoreModal(${divIdx}, ${rIdx}, ${mIdx}, '${bracketType}')">Edit Score</button>`;
     } else {
         actionArea = `<div style="color:var(--uha-gold); font-size:12px; text-align:center; padding:8px; font-weight:bold;">Match Complete</div>`;
     }
@@ -849,9 +872,9 @@ function generateMatchCardHTML(match, divIdx, rIdx, mIdx) {
 
 let currentScoreContext = null;
 
-window.openScoreModal = function(divIdx, rIdx, mIdx) {
-    currentScoreContext = { divIdx, rIdx, mIdx };
-    const match = lockedDivisions[divIdx].bracket[rIdx][mIdx];
+window.openScoreModal = function(divIdx, rIdx, mIdx, bType = 'winners') {
+    currentScoreContext = { divIdx, rIdx, mIdx, bType };
+    const match = bType === 'losers' ? lockedDivisions[divIdx].losersBracket[rIdx][mIdx] : lockedDivisions[divIdx].bracket[rIdx][mIdx];
     document.getElementById('score-modal-title').innerText = `${match.p1.name} vs ${match.p2.name}`;
 
     let existing = match.scores && match.scores !== 'BYE' ? match.scores.split(',').map(s => s.split('-')) : [];
@@ -883,9 +906,11 @@ window.closeScoreModal = function() {
 };
 
 window.saveScore = function() {
-    const { divIdx, rIdx, mIdx } = currentScoreContext;
+    const { divIdx, rIdx, mIdx, bType } = currentScoreContext;
     const div = lockedDivisions[divIdx];
-    const match = div.bracket[rIdx][mIdx];
+    
+    const targetBracket = bType === 'losers' ? div.losersBracket : div.bracket;
+    const match = targetBracket[rIdx][mIdx];
 
     const p1Inputs = document.querySelectorAll('.p1-score');
     const p2Inputs = document.querySelectorAll('.p2-score');
@@ -909,10 +934,11 @@ window.saveScore = function() {
 
     if (match.winner && (div.format === 'single_elim' || div.format === 'double_elim')) {
         let nextRIdx = rIdx + 1;
-        let nextMIdx = Math.floor(mIdx / 2);
-        if (div.bracket[nextRIdx] && div.bracket[nextRIdx][nextMIdx].p1) {
+        let nextMIdx = (bType === 'losers' && rIdx % 2 === 0) ? mIdx : Math.floor(mIdx / 2);
+        
+        if (targetBracket[nextRIdx] && targetBracket[nextRIdx][nextMIdx] && targetBracket[nextRIdx][nextMIdx].p1) {
             if(!confirm("Warning: Changing this score will erase the bracket forward. Continue?")) return;
-            wipeForwardBracket(divIdx, rIdx, mIdx);
+            wipeForwardBracket(divIdx, rIdx, mIdx, bType);
         }
     }
 
@@ -937,12 +963,10 @@ window.saveScore = function() {
     }
 
     const getIdsFromNames = (teamNameStr) => {
-
         const names = teamNameStr.split(' & '); 
         return names.map(name => {
             const trimmedName = name.trim();
             const foundPlayer = allPlayers.find(p => p.name === trimmedName);
-
             return foundPlayer ? Number(foundPlayer.id) : 0; 
         }).filter(id => id !== 0);
     };
@@ -973,21 +997,26 @@ window.saveScore = function() {
     }).catch(e => console.error("Firebase auto-save failed:", e));
 };
 
-function wipeForwardBracket(divIdx, rIdx, mIdx) {
+function wipeForwardBracket(divIdx, rIdx, mIdx, bType = 'winners') {
     let div = lockedDivisions[divIdx];
     let currRIdx = rIdx;
     let currMIdx = mIdx;
+    
+    let targetBracket = bType === 'losers' ? div.losersBracket : div.bracket;
 
-    while (div.bracket[currRIdx + 1]) {
+    while (targetBracket[currRIdx + 1]) {
         let nextRIdx = currRIdx + 1;
-        let nextMIdx = Math.floor(currMIdx / 2);
-        let nextMatch = div.bracket[nextRIdx][nextMIdx];
+        let nextMIdx = (bType === 'losers' && currRIdx % 2 === 0) ? currMIdx : Math.floor(currMIdx / 2);
+        let nextMatch = targetBracket[nextRIdx][nextMIdx];
 
-        nextMatch.p1 = null; nextMatch.p2 = null;
-        nextMatch.scores = ''; nextMatch.p1Wins = 0; nextMatch.p2Wins = 0;
-        nextMatch.winner = null;
+        if (nextMatch) {
+            nextMatch.p1 = null; nextMatch.p2 = null;
+            nextMatch.scores = ''; nextMatch.p1Wins = 0; nextMatch.p2Wins = 0;
+            nextMatch.winner = null;
+        }
 
-        currRIdx = nextRIdx; currMIdx = nextMIdx;
+        currRIdx = nextRIdx; 
+        currMIdx = nextMIdx;
     }
 }
 
@@ -995,26 +1024,36 @@ function progressBracket(divIdx, rIdx, mIdx) {
     let div = lockedDivisions[divIdx];
     if (div.format !== 'single_elim' && div.format !== 'double_elim') return; 
 
-    let match = div.bracket[rIdx][mIdx];
+    const bType = currentScoreContext ? currentScoreContext.bType : 'winners';
+    let match = bType === 'losers' ? div.losersBracket[rIdx][mIdx] : div.bracket[rIdx][mIdx];
     let winner = match.winner === 'p1' ? match.p1 : match.p2;
     let loser = match.winner === 'p1' ? match.p2 : match.p1;
     
     let nextRIdx = rIdx + 1;
     let nextMIdx = Math.floor(mIdx / 2);
 
-    if (div.bracket[nextRIdx]) {
-        if (mIdx % 2 === 0) div.bracket[nextRIdx][nextMIdx].p1 = winner;
-        else div.bracket[nextRIdx][nextMIdx].p2 = winner;
-    }
+    if (bType === 'winners') {
+        if (div.bracket[nextRIdx]) {
+            if (mIdx % 2 === 0) div.bracket[nextRIdx][nextMIdx].p1 = winner;
+            else div.bracket[nextRIdx][nextMIdx].p2 = winner;
+        }
 
-    if (div.format === 'double_elim' && div.losersBracket) {
-        if (match.loserDest) { 
+        if (div.format === 'double_elim' && div.losersBracket && match.loserDest) { 
             let lr = match.loserDest.rIdx;
             let lm = match.loserDest.mIdx;
             let slot = match.loserDest.slot;
 
             if (div.losersBracket[lr] && div.losersBracket[lr][lm]) {
                 div.losersBracket[lr][lm][slot] = loser;
+            }
+        }
+    } else if (bType === 'losers') {
+        if (div.losersBracket[nextRIdx]) {
+            if (rIdx % 2 === 0) {
+                div.losersBracket[nextRIdx][mIdx].p1 = winner;
+            } else {
+                if (mIdx % 2 === 0) div.losersBracket[nextRIdx][nextMIdx].p1 = winner;
+                else div.losersBracket[nextRIdx][nextMIdx].p2 = winner;
             }
         }
     }
