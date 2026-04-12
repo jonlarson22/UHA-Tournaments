@@ -730,6 +730,17 @@ function calculateStandings(players, matches) {
     }
 
     document.getElementById('btn-start').click(); 
+
+    const tName = document.getElementById('tournament-name').value || "Tournament";
+    db.ref('tournaments/active').set({
+        name: tName,
+        updatedAt: firebase.database.ServerValue.TIMESTAMP,
+        divisions: lockedDivisions
+    }).then(() => {
+        console.log("Knockout brackets synced to Firebase.");
+    }).catch(e => {
+        console.error("Failed to sync knockout brackets:", e);
+    });
 };
 
 function renderTournamentView() {
