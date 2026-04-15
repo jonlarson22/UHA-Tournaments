@@ -795,7 +795,7 @@ function renderTournamentView() {
             
             div.bracket.forEach((round, rIdx) => {
                 html += `<div class="bracket-round">`;
-                html += `<div class="bracket-header" style="margin-bottom: 20px;">Round ${rIdx + 1}</div>`; 
+                html += `<div class="bracket-header" style="margin-bottom: 20px; color: var(--uha-gold);">Round ${rIdx + 1}</div>`; 
                 html += `<div class="bracket-matches">`; 
                 round.forEach((match, mIdx) => {
                     html += generateMatchCardHTML(match, divIdx, rIdx, mIdx);
@@ -806,15 +806,15 @@ function renderTournamentView() {
 
             if (div.format === 'double_elim' && div.losersBracket) {
                 html += `<hr style="border: 0; border-top: 2px dashed #444; margin: 40px 0;">`;
-                html += `<h3 style="color:var(--uha-red); margin-top: 10px;">Losers Bracket</h3>`;
+                html += `<h3 style="color:var(--uha-blue); margin-top: 10px;">Losers Bracket</h3>`;
                 
-                html += `<div class="bracket-layout"><div class="bracket-columns">`;
+                // Added flex-wrap to prevent the horizontal scrollbar
+                html += `<div class="bracket-layout"><div class="bracket-columns" style="flex-wrap: wrap; justify-content: center;">`;
                 div.losersBracket.forEach((round, rIdx) => {
                     html += `<div class="bracket-round">`;
-                    html += `<div class="bracket-header" style="margin-bottom: 20px; color: var(--uha-red);">L-Round ${rIdx + 1}</div>`; 
+                    html += `<div class="bracket-header" style="margin-bottom: 20px; color: var(--uha-gold);">L-Round ${rIdx + 1}</div>`; 
                     html += `<div class="bracket-matches">`; 
                     round.forEach((match, mIdx) => {
-                        // Pass 'losers' so the score modal knows which bracket to update
                         html += generateMatchCardHTML(match, divIdx, rIdx, mIdx, 'losers'); 
                     });
                     html += `</div></div>`; 
