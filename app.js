@@ -1056,7 +1056,7 @@ window.saveScore = function() {
     .catch(e => console.error("Firebase Rules blocked pending write:", e));
 
     progressBracket(divIdx, rIdx, mIdx);
-    checkForByeAdvancement(divIdx);
+    autoAdvanceByes(divIdx);
     renderTournamentView();
     closeScoreModal();
 
@@ -1069,48 +1069,51 @@ window.saveScore = function() {
     }).catch(e => console.error("Firebase auto-save failed:", e));
 };
 
-function checkForByeAdvancement(divIdx) {
+function autoAdvanceByes(divIdx) {
     const div = lockedDivisions[divIdx];
-    let advancedAny = false;
+    let madeChanges = false;
 
-    const checkBracket = (bracket) => {
+    const sweep = (bracket) => {
         if (!bracket) return;
-        bracket.forEach((round, rIdx) => {
-            round.forEach((match, mIdx) => {
-                const hasP1 = !!match.p1;
-                const hasP2 = !!match.p2;
+        bracket.forEach((round) => {
+            round.forEach((match) => {
+                if (match.winner) return;
 
-                if (hasP1 && match.p2 === null && !match.winner) {
-                    match.winner = 'p1';
-                    match.scores = "BYE";
-                    if (match.nextMatch) {
-                        const nm = match.nextMatch;
-                        const targetBracket = nm.type === 'losers' ? div.losersBracket : (nm.type === 'finals' ? div.finalsBracket : div.bracket);
-                        targetBracket[nm.round][nm.matchIdx][nm.slot] = match.p1;
-                    }
-                    advancedAny = true;
-                }
+                const p1Exists = !!match.p1;
+                const p2Exists = !!match.p2;
 
-                if (hasP2 && match.p1 === null && !match.winner) {
-                    match.winner = 'p2';
-                    match.scores = "BYE";
-                    if (match.nextMatch) {
-                        const nm = match.nextMatch;
-                        const targetBracket = nm.type === 'losers' ? div.losersBracket : (nm.type === 'finals' ? div.finalsBracket : div.bracket);
-                        targetBracket[nm.round][nm.matchIdx][nm.slot] = match.p2;
-                    }
-                    advancedAny = true;
+                if (p1Exists && match.p2 === null) {
+                    advanceMatch(match, 'p1', div);
+                    madeChanges = true;
+                } 
+
+                else if (p2Exists && match.p1 === null) {
+                    advanceMatch(match, 'p2', div);
+                    madeChanges = true;
                 }
             });
         });
     };
 
-    checkBracket(div.bracket);
-    checkBracket(div.losersBracket);
-    checkBracket(div.finalsBracket);
+    sweep(div.bracket);
+    sweep(div.losersBracket);
+    sweep(div.finalsBracket);
 
-    if (advancedAny) {
-        checkForByeAdvancement(divIdx);
+    if (madeChanges) autoAdvanceByes(divIdx);
+}
+
+function advanceMatch(match, slot, div) {
+    match.winner = slot;
+    match.scores = "BYE";
+    match.p1Wins = (slot === 'p1') ? 1 : 0;
+    match.p2Wins = (slot === 'p2') ? 1 : 0;
+
+    const winnerObj = match[slot];
+
+    if (match.nextMatch) {
+        const nm = match.nextMatch;
+        const target = nm.type === 'losers' ? div.losersBracket : (nm.type === 'finals' ? div.finalsBracket : div.bracket);
+        target[nm.round][nm.matchIdx][nm.slot] = winnerObj;
     }
 }
 
