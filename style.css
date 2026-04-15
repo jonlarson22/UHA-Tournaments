@@ -220,20 +220,23 @@ input[type="text"], input[type="number"], select {
 .bracket-matches {
     display: flex;
     flex-direction: column;
-    justify-content: space-around; /* This centers the matches */
-    flex: 1; /* Pushes to fill space under the header */
-    gap: 15px;
+    justify-content: space-around;
+    flex: 1;
+    min-width: 160px; 
+    max-width: 240px;
+    gap: 10px;
 }
 
 .match-card {
-    min-width: 170px;
+    width: 100%;
     background: #1a1a1a;
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    padding: 8px 12px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    box-sizing: border-box;
 }
 
 .match-team {
@@ -279,7 +282,10 @@ input[type="text"], input[type="number"], select {
     flex-direction: column;
     justify-content: space-around; /* This centers the matches vertically */
     min-width: 200px;
-    gap: 15px;
+    gap: 20px;
+    overflow-x: auto;
+    padding: 20px 0;
+    align-items: stretch;
 }
 
 /* --- STANDINGS TABLE --- */
