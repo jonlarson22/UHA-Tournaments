@@ -514,6 +514,32 @@ document.getElementById('btn-start').addEventListener('click', () => {
 
             division.bracket = wBracket;
             division.losersBracket = lBracket;
+          
+            round1.forEach((match, mIdx) => {
+                if (match.scores === 'BYE' && match.winner && wBracket[1]) {
+                    let advancer = match[match.winner]; 
+                    let loser = match.winner === 'p1' ? match.p2 : match.p1;
+                    
+                    let nextMIdx = Math.floor(mIdx / 2);
+                    if (mIdx % 2 === 0) wBracket[1][nextMIdx].p1 = advancer;
+                    else wBracket[1][nextMIdx].p2 = advancer;
+
+                    if (match.loserDest && lBracket[match.loserDest.rIdx]) {
+                        lBracket[match.loserDest.rIdx][match.loserDest.mIdx][match.loserDest.slot] = loser;
+                    }
+                }
+            });
+
+            division.bracket = wBracket;
+            division.losersBracket = lBracket;
+
+            let fBracket = [];
+            fBracket.push([{p1: null, p2: null, p1Wins: 0, p2Wins: 0, scores: '', winner: null}]);
+
+            if (division.grandFinalRule === 'true_double') {
+                fBracket.push([{p1: null, p2: null, p1Wins: 0, p2Wins: 0, scores: '', winner: null}]);
+            }
+            division.finalsBracket = fBracket;
         }
                         
         else if (division.format === 'round_robin') {
@@ -780,18 +806,26 @@ function renderTournamentView() {
             if (div.format === 'double_elim' && div.losersBracket) {
                 html += `<hr style="border: 0; border-top: 2px dashed #444; margin: 40px 0;">`;
                 html += `<h3 style="color:var(--uha-red); margin-top: 10px;">Losers Bracket</h3>`;
-                
-                html += `<div class="bracket-layout"><div class="bracket-columns">`;
-                div.losersBracket.forEach((round, rIdx) => {
-                    html += `<div class="bracket-round">`;
-                    html += `<div class="bracket-header" style="margin-bottom: 20px; color: var(--uha-red);">L-Round ${rIdx + 1}</div>`; 
-                    html += `<div class="bracket-matches">`; 
-                    round.forEach((match, mIdx) => {
-                        html += generateMatchCardHTML(match, divIdx, rIdx, mIdx, 'losers'); 
-                    });
-                    html += `</div></div>`; 
-                }); 
                 html += `</div></div>`;
+            }
+
+            if (div.format === 'double_elim' && div.finalsBracket) {
+                html += `<hr style="border: 0; border-top: 2px solid var(--uha-gold); margin: 50px 0 20px 0;">`;
+                html += `<h2 style="color:var(--uha-gold); text-align:center; text-transform:uppercase;">Championship Finals</h2>`;
+                html += `<div style="display: flex; justify-content: center; gap: 40px; padding: 20px; flex-wrap: wrap;">`;
+                
+                div.finalsBracket.forEach((round, rIdx) => {
+                    let match = round[0]; 
+                    if (rIdx === 0 || (rIdx === 1 && match.p1)) { 
+                        html += `<div class="bracket-round">`;
+                        html += `<div class="bracket-header" style="margin-bottom: 20px; color: var(--uha-gold);">${rIdx === 0 ? 'Match 1' : 'If Necessary'}</div>`;
+                        html += `<div class="bracket-matches">`;
+                        // Pass 'finals' as the bracketType
+                        html += generateMatchCardHTML(match, divIdx, rIdx, 0, 'finals'); 
+                        html += `</div></div>`;
+                    }
+                });
+                html += `</div>`;
             }
             
         } else if (div.format === 'round_robin' || div.format === 'multi_group_rr') {
@@ -901,7 +935,8 @@ let currentScoreContext = null;
 
 window.openScoreModal = function(divIdx, rIdx, mIdx, bType = 'winners') {
     currentScoreContext = { divIdx, rIdx, mIdx, bType };
-    const match = bType === 'losers' ? lockedDivisions[divIdx].losersBracket[rIdx][mIdx] : lockedDivisions[divIdx].bracket[rIdx][mIdx];
+    const targetBracket = bType === 'finals' ? lockedDivisions[divIdx].finalsBracket : (bType === 'losers' ? lockedDivisions[divIdx].losersBracket : lockedDivisions[divIdx].bracket);
+    const match = targetBracket[rIdx][mIdx];
     document.getElementById('score-modal-title').innerText = `${match.p1.name} vs ${match.p2.name}`;
 
     let existing = match.scores && match.scores !== 'BYE' ? match.scores.split(',').map(s => s.split('-')) : [];
@@ -936,7 +971,7 @@ window.saveScore = function() {
     const { divIdx, rIdx, mIdx, bType } = currentScoreContext;
     const div = lockedDivisions[divIdx];
     
-    const targetBracket = bType === 'losers' ? div.losersBracket : div.bracket;
+    const targetBracket = bType === 'finals' ? div.finalsBracket : (bType === 'losers' ? div.losersBracket : div.bracket);
     const match = targetBracket[rIdx][mIdx];
 
     const p1Inputs = document.querySelectorAll('.p1-score');
@@ -1026,7 +1061,7 @@ window.saveScore = function() {
 
 function wipeForwardBracket(divIdx, rIdx, mIdx, bType = 'winners') {
     let div = lockedDivisions[divIdx];
-    let targetBracket = bType === 'losers' ? div.losersBracket : div.bracket;
+    let targetBracket = bType === 'finals' ? div.finalsBracket : (bType === 'losers' ? div.losersBracket : div.bracket);
 
     let currR = rIdx;
     let currM = mIdx;
@@ -1051,7 +1086,9 @@ function progressBracket(divIdx, rIdx, mIdx) {
     if (div.format !== 'single_elim' && div.format !== 'double_elim') return; 
 
     const bType = currentScoreContext ? currentScoreContext.bType : 'winners';
-    let match = bType === 'losers' ? div.losersBracket[rIdx][mIdx] : div.bracket[rIdx][mIdx];
+    let targetBracket = bType === 'finals' ? div.finalsBracket : (bType === 'losers' ? div.losersBracket : div.bracket);
+    let match = targetBracket[rIdx][mIdx];
+    
     let winner = match.winner === 'p1' ? match.p1 : match.p2;
     let loser = match.winner === 'p1' ? match.p2 : match.p1;
     
@@ -1062,6 +1099,8 @@ function progressBracket(divIdx, rIdx, mIdx) {
         if (div.bracket[nextRIdx]) {
             if (mIdx % 2 === 0) div.bracket[nextRIdx][nextMIdx].p1 = winner;
             else div.bracket[nextRIdx][nextMIdx].p2 = winner;
+        } else if (div.format === 'double_elim' && div.finalsBracket) {
+            div.finalsBracket[0][0].p1 = winner;
         }
 
         if (div.format === 'double_elim' && div.losersBracket && match.loserDest) { 
@@ -1080,6 +1119,21 @@ function progressBracket(divIdx, rIdx, mIdx) {
             } else {
                 if (mIdx % 2 === 0) div.losersBracket[nextRIdx][nextMIdx].p1 = winner;
                 else div.losersBracket[nextRIdx][nextMIdx].p2 = winner;
+            }
+        } else if (div.format === 'double_elim' && div.finalsBracket) {
+            div.finalsBracket[0][0].p2 = winner;
+        }
+    } else if (bType === 'finals') {
+
+        if (rIdx === 0 && div.finalsBracket[1]) {
+            if (match.winner === 'p2') {
+                div.finalsBracket[1][0].p1 = match.p1;
+                div.finalsBracket[1][0].p2 = match.p2;
+            } else {
+                div.finalsBracket[1][0].p1 = null;
+                div.finalsBracket[1][0].p2 = null;
+                div.finalsBracket[1][0].scores = '';
+                div.finalsBracket[1][0].winner = null;
             }
         }
     }
