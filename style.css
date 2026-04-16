@@ -398,3 +398,8 @@ input[type="text"], input[type="number"], select {
     font-size: 0.85em; /* Scales down the text slightly */
     width: auto; /* Ensures it only takes up as much space as the text needs */
 }
+
+button[onclick^="promptScore"] {
+    background: var(--green-win) !important;
+    color: #111 !important;
+}
