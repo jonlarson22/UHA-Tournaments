@@ -808,7 +808,6 @@ function renderTournamentView() {
                 html += `<hr style="border: 0; border-top: 2px dashed #444; margin: 40px 0;">`;
                 html += `<h3 style="color:var(--uha-blue); margin-top: 10px;">Losers Bracket</h3>`;
                 
-                // Added flex-wrap to prevent the horizontal scrollbar
                 html += `<div class="bracket-layout"><div class="bracket-columns" style="flex-wrap: wrap; justify-content: center;">`;
                 div.losersBracket.forEach((round, rIdx) => {
                     html += `<div class="bracket-round">`;
@@ -864,7 +863,7 @@ function renderTournamentView() {
                 });
                 html += `</table>`;
 
-                html += `<div class="bracket-columns" style="flex-wrap: wrap; margin-bottom: 40px;">`;
+                html += `<div class="rr-match-grid">`;
                 groupMatches.forEach((match, mIdx) => {
                     html += generateMatchCardHTML(match, divIdx, groupIndex, mIdx);
                 });
