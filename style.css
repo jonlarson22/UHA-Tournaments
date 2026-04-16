@@ -319,7 +319,9 @@ input[type="text"], input[type="number"], select {
     background: #252525;
 }
 
-.standings-table th:nth-child(1), 
+.standings-table th:nth-child(1) {
+    text-align: center;
+}
 .standings-table td:nth-child(1) { 
     text-align: center; 
     color: var(--uha-blue);
