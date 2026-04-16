@@ -286,23 +286,24 @@ input[type="text"], input[type="number"], select {
 .rr-match-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 20px;
     justify-content: center;
-    margin-top: 15px;
-    margin-bottom: 40px;
+    margin: 20px auto 40px auto;
+
+    max-width: 850px; 
 }
 
 .rr-match-grid .match-card {
-    flex: 0 1 260px; 
-    min-width: 220px;
+    flex: 0 1 240px; 
     margin: 0;
     box-sizing: border-box;
 }
 
-@media (max-width: 800px) {
+/* Mobile adjustments */
+@media (max-width: 600px) {
     .rr-match-grid .match-card {
         flex: 0 1 100%;
-        max-width: 350px;
+        max-width: 320px;
     }
 }
 
