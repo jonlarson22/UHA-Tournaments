@@ -285,8 +285,8 @@ input[type="text"], input[type="number"], select {
 /* --- ROUND ROBIN GRID --- */
 .rr-match-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
     margin-top: 15px;
     margin-bottom: 30px;
 }
