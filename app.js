@@ -1004,18 +1004,17 @@ window.saveScore = function() {
     if (p1Wins === p2Wins) return alert("Match cannot end in a tie.");
 
     if (match.winner && (div.format === 'single_elim' || div.format === 'double_elim')) {
-    let nextRIdx = rIdx + 1;
-    let nextMIdx = (bType === 'losers' && rIdx % 2 === 0) ? mIdx : Math.floor(mIdx / 2);
+        let nextRIdx = rIdx + 1;
+        let nextMIdx = (bType === 'losers' && rIdx % 2 === 0) ? mIdx : Math.floor(mIdx / 2);
 
-    if (targetBracket[nextRIdx] && targetBracket[nextRIdx][nextMIdx]) {
-        let nextMatch = targetBracket[nextRIdx][nextMIdx];
-        
-        if (nextMatch.winner) {
-            if(!confirm("Warning: Changing this score will erase the bracket forward. Continue?")) return;
-            wipeForwardBracket(divIdx, rIdx, mIdx, bType);
+        if (targetBracket[nextRIdx] && targetBracket[nextRIdx][nextMIdx]) {
+            let nextMatch = targetBracket[nextRIdx][nextMIdx];
+            if (nextMatch.winner) {
+                if(!confirm("Warning: Changing this score will erase the bracket forward. Continue?")) return;
+                wipeForwardBracket(divIdx, rIdx, mIdx, bType);
+            }
         }
     }
-}
 
     match.scores = scoreStrings.join(', ');
     match.p1Wins = p1Wins;
@@ -1024,7 +1023,6 @@ window.saveScore = function() {
 
     const winningTeam = match.winner === 'p1' ? match.p1 : match.p2;
     const losingTeam = match.winner === 'p1' ? match.p2 : match.p1;
-
     const wName = winningTeam && winningTeam.name ? winningTeam.name : '';
     const lName = losingTeam && losingTeam.name ? losingTeam.name : '';
 
@@ -1032,7 +1030,6 @@ window.saveScore = function() {
     for(let i=0; i<3; i++) {
         let s1 = parseInt(p1Inputs[i].value);
         let s2 = parseInt(p2Inputs[i].value);
-
         if (!isNaN(s1) && !isNaN(s2)) {
             let wScore = match.winner === 'p1' ? s1 : s2;
             let lScore = match.winner === 'p1' ? s2 : s1;
@@ -1042,7 +1039,6 @@ window.saveScore = function() {
 
     const getIdsFromNames = (teamNameStr) => {
         if (!teamNameStr || typeof teamNameStr !== 'string') return [];
-        
         const names = teamNameStr.split(' & '); 
         return names.map(name => {
             const trimmedName = name.trim();
@@ -1053,21 +1049,23 @@ window.saveScore = function() {
 
     const pendingMatch = {
         id: Date.now(),
-        // Added a quick fallback for div.mode just in case
         mode: div.mode ? div.mode.toLowerCase() : 'unknown', 
         score: `${Math.max(p1Wins, p2Wins)}-${Math.min(p1Wins, p2Wins)}`,
-        // 3. USE THE FAILSAFE VARIABLES HERE
         winners: getIdsFromNames(wName),
         losers: getIdsFromNames(lName),
         games: detailedGames
     };
 
     db.ref('pending').push(pendingMatch)
-    .then(() => console.log("Match successfully added to pending queue."))
-    .catch(e => console.error("Firebase Rules blocked pending write:", e));
+    .catch(e => console.error("Pending queue error:", e));
 
-    progressBracket(divIdx, rIdx, mIdx);
-    autoAdvanceByes(divIdx);
+    try {
+        progressBracket(divIdx, rIdx, mIdx);
+
+    } catch (err) {
+        console.error("Auto-advance failed, but saving score anyway:", err);
+    }
+
     renderTournamentView();
     closeScoreModal();
 
@@ -1079,56 +1077,10 @@ window.saveScore = function() {
         name: tName, 
         updatedAt: firebase.database.ServerValue.TIMESTAMP,
         divisions: lockedDivisions
+    }).then(() => {
+        console.log("Tournament state saved successfully.");
     }).catch(e => console.error("Firebase auto-save failed:", e));
 };
-
-function autoAdvanceByes(divIdx) {
-    const div = lockedDivisions[divIdx];
-    let madeChanges = false;
-
-    const sweep = (bracket) => {
-        if (!bracket) return;
-        bracket.forEach((round) => {
-            round.forEach((match) => {
-                if (match.winner) return;
-            
-                const p1Exists = (match.p1 && match.p1.name !== "BYE");
-                const p2Exists = (match.p2 && match.p2.name !== "BYE");
-            
-                if (p1Exists && (match.p2 === null || match.p2.name === "BYE")) {
-                    advanceMatch(match, 'p1', div);
-                    madeChanges = true;
-                } 
-            
-                else if (p2Exists && (match.p1 === null || match.p1.name === "BYE")) {
-                    advanceMatch(match, 'p2', div);
-                    madeChanges = true;
-                }
-            });
-        });
-    };
-
-    sweep(div.bracket);
-    sweep(div.losersBracket);
-    sweep(div.finalsBracket);
-
-    if (madeChanges) autoAdvanceByes(divIdx);
-}
-
-function advanceMatch(match, slot, div) {
-    match.winner = slot;
-    match.scores = "BYE";
-    match.p1Wins = (slot === 'p1') ? 1 : 0;
-    match.p2Wins = (slot === 'p2') ? 1 : 0;
-
-    const winnerObj = match[slot];
-
-    if (match.nextMatch) {
-        const nm = match.nextMatch;
-        const target = nm.type === 'losers' ? div.losersBracket : (nm.type === 'finals' ? div.finalsBracket : div.bracket);
-        target[nm.round][nm.matchIdx][nm.slot] = winnerObj;
-    }
-}
 
 function wipeForwardBracket(divIdx, rIdx, mIdx, bType = 'winners') {
     let div = lockedDivisions[divIdx];
@@ -1209,6 +1161,24 @@ function progressBracket(divIdx, rIdx, mIdx) {
         }
     }
 }
+
+window.forceMovePlayer = function(divIdx, bType, fromRound, fromMatch, toRound, toMatch, slot) {
+    const div = lockedDivisions[divIdx];
+    const bracket = bType === 'losers' ? div.losersBracket : div.bracket;
+    
+    const sourceMatch = bracket[fromRound][fromMatch];
+    const playerToMove = sourceMatch.winner === 'p1' ? sourceMatch.p1 : sourceMatch.p2;
+
+    if (slot === 'p1') {
+        bracket[toRound][toMatch].p1 = playerToMove;
+    } else {
+        bracket[toRound][toMatch].p2 = playerToMove;
+    }
+
+    renderTournamentView();
+    db.ref('tournaments/active/divisions').set(lockedDivisions);
+    alert("Player moved manually.");
+};
 
 window.archiveTournament = function() {
     if (!isAdmin) return;
