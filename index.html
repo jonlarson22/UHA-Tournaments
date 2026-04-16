@@ -9,13 +9,14 @@
 <body>
 
 <div class="uha-container">
-    <header class="uha-header">
-        <h1 id="header-title" style="cursor: pointer;" title="Admin Access">UHA Tournament Dashboard</h1>
-        <div style="display:flex; gap:15px; align-items:center;">
-            <div id="connection-status">Connecting to Firebase...</div>
-            <button id="btn-logout" class="uha-btn-outline" style="display:none; padding: 5px 10px; font-size: 12px;" onclick="logoutAdmin()">Logout</button>
-        </div>
-    </header>
+    <div style="border-bottom: 2px solid var(--uha-blue); padding-bottom: 20px; margin-bottom: 30px; text-align: center;">
+        <h2 id="header-title" style="color: var(--uha-blue); margin: 0; font-size: 32px; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 4px 10px rgba(52,152,219,0.3); cursor: pointer;" title="Admin Access">
+            Utah Handball Association
+        </h2>
+        <h3 style="color: var(--uha-gold); margin-top: 5px; font-weight: normal; letter-spacing: 1px; margin-bottom: 0;">
+            Tournament Dashboard
+        </h3>
+    </div>
     
     <section id="admin-dashboard">
 
@@ -72,7 +73,7 @@
                 </button>
                 
                 <button class="uha-btn uha-btn-outline" onclick="openManualMoveModal()" style="margin-top: 10px; border-color: #e74c3c; color: #e74c3c;">
-                    🚀 Manual Bracket Override
+                    Manual Bracket Override
                 </button>
             </div>
 
@@ -138,6 +139,12 @@
             <button id="btn-archive" class="uha-btn-outline" onclick="archiveTournament()" style="display:none; flex: 1; border-color: var(--uha-gold); color: var(--uha-gold);">Archive Finished Tournament</button>
         </div>
     </section>
+
+    <div style="display:flex; justify-content: space-between; align-items:center; margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+        <div id="connection-status" style="font-size: 12px; color: var(--text-muted);">Connecting to Firebase...</div>
+        <button id="btn-logout" class="uha-btn-outline" style="display:none; padding: 5px 15px; font-size: 12px; width: auto;" onclick="logoutAdmin()">Logout</button>
+    </div>
+
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
