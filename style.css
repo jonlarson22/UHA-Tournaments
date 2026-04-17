@@ -102,6 +102,11 @@ input[type="text"], input[type="number"], select {
     color: black;
 }
 
+.uha-btn-blue {
+    background: var(--uha-blue);
+    color: white;
+}
+
 .uha-btn-outline {
     background: transparent;
     color: white;
