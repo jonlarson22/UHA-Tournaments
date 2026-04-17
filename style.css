@@ -100,11 +100,13 @@ input[type="text"], input[type="number"], select {
 .uha-btn-gold {
     background: var(--uha-gold);
     color: black;
+    font-weight: bold;
 }
 
 .uha-btn-blue {
     background: var(--uha-blue);
     color: white;
+    font-weight: bold;
 }
 
 .uha-btn-outline {
