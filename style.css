@@ -103,7 +103,7 @@ input[type="text"], input[type="number"], select {
 }
 
 .uha-btn-outline {
-    background: var(--uha-blue);
+    background: transparent;
     color: white;
     border: 1px solid white;
     padding: 12px;
