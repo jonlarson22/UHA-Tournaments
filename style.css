@@ -84,7 +84,7 @@ input[type="text"], input[type="number"], select {
 
 /* --- BUTTONS --- */
 .uha-btn {
-    background: #27ae60 !important; 
+    background: #27ae60; 
     color: white; 
     border: none;
     padding: 12px;
@@ -104,8 +104,8 @@ input[type="text"], input[type="number"], select {
 
 .uha-btn-outline {
     background: transparent;
-    color: var(--uha-blue);
-    border: 1px solid var(--uha-blue);
+    color: white;
+    border: 1px solid white;
     padding: 12px;
     width: 100%;
     cursor: pointer;
