@@ -28,7 +28,7 @@
             
             <div class="column">
                 <div class="section-title">Tournament Name</div>
-                    <input type="text" id="tournament-name" placeholder="Tournament Title (e.g., 2026 State Doubles)" class="uha-input" style="width: 95%; margin-bottom: 30px; font-size: 16px;">
+                    <input type="text" id="tournament-name" placeholder="(e.g., 2026 State Doubles)" class="uha-input" style="width: 95%; margin-bottom: 30px; font-size: 16px;">
                 <div class="section-title">Configuration</div>
                     <div class="mode-toggle">
                     <button class="mode-btn active" id="btn-mode-singles">Singles</button>
@@ -93,7 +93,7 @@
                             <input type="checkbox" id="new-player-member" checked style="width: auto; margin: 0; cursor: pointer;">
                             <label for="new-player-member" style="font-size: 12px; color: var(--text-muted); cursor: pointer;">UHA Member</label>
                         </div>
-                        <button id="btn-add-player" class="uha-btn" style="width: auto; padding: 8px 15px;">+ Add to Database</button>
+                        <button id="btn-add-player" class="uha-btn-blue" style="width: auto; padding: 8px 15px;">+ Add to Database</button>
                     </div>
                 </div>
                 
@@ -135,13 +135,13 @@
         <div id="matchup-container"></div>
         
         <div style="display: flex; gap: 15px; margin-top: 30px;">
-            <button id="btn-reset" onclick="location.reload()" class="uha-btn-outline" style="flex: 1;">Back to Setup / Refresh</button>
+            <button id="btn-reset" onclick="location.reload()" class="uha-btn-blue" style="flex: 1;">Back to Setup / Refresh</button>
             <button id="btn-archive" class="uha-btn-outline" onclick="archiveTournament()" style="display:none; flex: 1; border-color: var(--uha-gold); color: var(--uha-gold);">Archive Finished Tournament</button>
         </div>
     </section>
 
     <div style="display:flex; justify-content: space-between; align-items:center; margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-            <button id="btn-logout" class="uha-btn-outline" style="display:none; padding: 5px 15px; font-size: 12px; width: auto;" onclick="logoutAdmin()">Logout</button>
+            <button id="btn-logout" class="uha-btn-blue" style="display:none; padding: 5px 15px; font-size: 12px; width: auto;" onclick="logoutAdmin()">Logout</button>
             <div id="connection-status" style="font-size: 12px; color: var(--text-muted);">Connecting to Firebase...</div>
         </div>
     
