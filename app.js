@@ -285,8 +285,9 @@ document.getElementById('btn-lock-division').addEventListener('click', () => {
     const finalRuleEl = document.getElementById('double-elim-final');
     const finalRule = finalRuleEl ? finalRuleEl.value : 'true_double';
 
-    const thirdPlaceEl = document.getElementById('single-elim-third-place');
-    const hasThirdPlace = thirdPlaceEl ? thirdPlaceEl.checked : false;
+   const singleThird = document.getElementById('single-elim-third-place');
+    const multiThird = document.getElementById('multi-group-third-place');
+    const hasThirdPlace = (singleThird && singleThird.checked) || (multiThird && multiThird.checked);
     
     const participantElements = document.querySelectorAll('.singles-slot, .team-slot');
     if (participantElements.length < 2) return alert("Need at least 2 participants to lock a division.");
@@ -766,26 +767,42 @@ window.advanceToKnockout = function(divIdx) {
         }
     }
 
+    const generateThirdPlaceSlot = () => [[{ p1: null, p2: null, scores: '', p1Wins: 0, p2Wins: 0, winner: null }]];
+
     if (championshipPlayers.length > 0) {
-        lockedDivisions.push({
+        let newChampDiv = {
             name: champName,
             format: "single_elim",
             mode: div.mode,
             participants: championshipPlayers,
             bracket: [],
             isFromRR: true
-        });
+        };
+
+        if (div.hasThirdPlaceMatch) {
+            newChampDiv.hasThirdPlaceMatch = true;
+            newChampDiv.thirdPlaceMatch = generateThirdPlaceSlot();
+        }
+        
+        lockedDivisions.push(newChampDiv);
     }
 
     if (consolationPlayers.length > 0) {
-        lockedDivisions.push({
+        let newConsDiv = {
             name: div.name + " (Consolation)",
             format: "single_elim",
             mode: div.mode,
             participants: consolationPlayers,
             bracket: [],
             isFromRR: true
-        });
+        };
+
+        if (div.hasThirdPlaceMatch) {
+            newConsDiv.hasThirdPlaceMatch = true;
+            newConsDiv.thirdPlaceMatch = generateThirdPlaceSlot();
+        }
+        
+        lockedDivisions.push(newConsDiv);
     }
 
     document.getElementById('btn-start').click(); 
