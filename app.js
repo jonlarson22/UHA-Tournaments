@@ -693,78 +693,31 @@ window.advanceToKnockout = function(divIdx) {
     let championshipPlayers = [];
     let consolationPlayers = [];
 
+    const perfSort = (a, b) => {
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        if (b.winRatio !== a.winRatio) return b.winRatio - a.winRatio;
+        if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
+        return b.totalScore - a.totalScore;
+    };
+    
+    let rank1s = allStandings.filter(s => s.groupRank === 1).sort(perfSort);
+    let poolOrder = rank1s.map(s => s.groupIdx); 
+    if (poolOrder.length === 0) poolOrder = div.bracket.map((_, i) => i);
+
+    const crossSort = (a, b) => {
+        if (a.groupRank !== b.groupRank) return a.groupRank - b.groupRank;
+        return poolOrder.indexOf(a.groupIdx) - poolOrder.indexOf(b.groupIdx);
+    };
+
+    let sortedAll = [...allStandings].sort(crossSort);
+
     if (rule === 'all_to_single') {
-
-        const superSort = (a, b) => {
-            if (a.groupRank !== b.groupRank) return a.groupRank - b.groupRank;
-            if (b.pts !== a.pts) return b.pts - a.pts;
-            if (b.winRatio !== a.winRatio) return b.winRatio - a.winRatio;
-            if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
-            return b.totalScore - a.totalScore;
-        };
-        let masterSeeds = [...allStandings].sort(superSort);
-
-        let total = masterSeeds.length;
-        for (let i = 0; i < total / 2; i++) {
-            let topSeed = masterSeeds[i];
-            let bottomSeedIndex = total - 1 - i;
-            let bottomSeed = masterSeeds[bottomSeedIndex];
-
-            if (topSeed.groupIdx === bottomSeed.groupIdx) {
-                let swapIdx = bottomSeedIndex - 1; 
-
-                if (swapIdx >= total / 2) {
-                    let temp = masterSeeds[bottomSeedIndex];
-                    masterSeeds[bottomSeedIndex] = masterSeeds[swapIdx];
-                    masterSeeds[swapIdx] = temp;
-                    console.log(`Avoided Round 1 Rematch: Swapped ${topSeed.player.name}'s opponent.`);
-                }
-            }
-        }
-
-        championshipPlayers = masterSeeds.map(s => s.player);
-        
-    } else {
-        const perfSort = (a, b) => {
-            if (b.pts !== a.pts) return b.pts - a.pts;
-            if (b.winRatio !== a.winRatio) return b.winRatio - a.winRatio;
-            if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
-            return b.totalScore - a.totalScore;
-        };
-        
-        let rank1s = allStandings.filter(s => s.groupRank === 1).sort(perfSort);
-        let poolOrder = rank1s.map(s => s.groupIdx); 
-        if (poolOrder.length === 0) poolOrder = div.bracket.map((_, i) => i);
-
-        const crossSort = (a, b) => {
-            if (a.groupRank !== b.groupRank) return a.groupRank - b.groupRank;
-            return poolOrder.indexOf(a.groupIdx) - poolOrder.indexOf(b.groupIdx);
-        };
-
-        let sortedAll = allStandings.sort(crossSort);
-
-        const buildCrossRoster = (standings, ranks) => {
-            let roster = [];
-            for (let i = 0; i < ranks.length; i++) {
-                let rankPlayers = standings.filter(s => s.groupRank === ranks[i]).map(s => s.player);
-                if (i % 2 !== 0 && rankPlayers.length >= 4) {
-                    let half = Math.floor(rankPlayers.length / 2);
-                    rankPlayers = rankPlayers.slice(half).concat(rankPlayers.slice(0, half));
-                }
-                roster = roster.concat(rankPlayers);
-            }
-            return roster;
-        };
-
-        if (rule === 'single_bracket') { 
-            championshipPlayers = buildCrossRoster(sortedAll, [1, 2]);
-        } else if (rule === 'split_bracket') { 
-            championshipPlayers = buildCrossRoster(sortedAll, [1, 2]);
-            let maxRank = Math.max(...allStandings.map(s => s.groupRank));
-            let consRanks = [];
-            for(let r = 3; r <= maxRank; r++) consRanks.push(r);
-            consolationPlayers = buildCrossRoster(sortedAll, consRanks);
-        }
+        championshipPlayers = sortedAll.map(s => s.player);
+    } else if (rule === 'single_bracket') { 
+        championshipPlayers = sortedAll.filter(s => s.groupRank <= 2).map(s => s.player);
+    } else if (rule === 'split_bracket') { 
+        championshipPlayers = sortedAll.filter(s => s.groupRank <= 2).map(s => s.player);
+        consolationPlayers = sortedAll.filter(s => s.groupRank >= 3).map(s => s.player);
     }
 
     const generateThirdPlaceSlot = () => [[{ p1: null, p2: null, scores: '', p1Wins: 0, p2Wins: 0, winner: null }]];
@@ -783,7 +736,6 @@ window.advanceToKnockout = function(divIdx) {
             newChampDiv.hasThirdPlaceMatch = true;
             newChampDiv.thirdPlaceMatch = generateThirdPlaceSlot();
         }
-        
         lockedDivisions.push(newChampDiv);
     }
 
@@ -801,7 +753,6 @@ window.advanceToKnockout = function(divIdx) {
             newConsDiv.hasThirdPlaceMatch = true;
             newConsDiv.thirdPlaceMatch = generateThirdPlaceSlot();
         }
-        
         lockedDivisions.push(newConsDiv);
     }
 
