@@ -858,6 +858,19 @@ function renderTournamentView() {
                 });
                 html += `</div>`;
             }
+
+            if (div.format === 'single_elim' && div.thirdPlaceMatch) {
+                html += `<hr style="border: 0; border-top: 2px dashed var(--uha-gold); margin: 40px 0;">`;
+                html += `<h3 style="color:var(--uha-gold); margin-top: 10px; text-align: center;">3rd Place Playoff</h3>`;
+                
+                html += `<div class="bracket-layout" style="justify-content: center;"><div class="bracket-columns" style="justify-content: center;">`;
+                html += `<div class="bracket-round">`;
+                html += `<div class="bracket-matches">`;
+                
+                html += generateMatchCardHTML(div.thirdPlaceMatch[0][0], divIdx, 0, 0, 'third_place'); 
+                
+                html += `</div></div></div></div>`;
+            }
             
         } else if (div.format === 'round_robin' || div.format === 'multi_group_rr') {
 
@@ -967,15 +980,24 @@ let currentScoreContext = null;
 
 window.openScoreModal = function(divIdx, rIdx, mIdx, bType = 'winners') {
     currentScoreContext = { divIdx, rIdx, mIdx, bType };
-    const targetBracket = bType === 'finals' ? lockedDivisions[divIdx].finalsBracket : (bType === 'losers' ? lockedDivisions[divIdx].losersBracket : lockedDivisions[divIdx].bracket);
+
+    let targetBracket = lockedDivisions[divIdx].bracket;
+    if (bType === 'finals') targetBracket = lockedDivisions[divIdx].finalsBracket;
+    else if (bType === 'losers') targetBracket = lockedDivisions[divIdx].losersBracket;
+    else if (bType === 'third_place') targetBracket = lockedDivisions[divIdx].thirdPlaceMatch;
+
     const match = targetBracket[rIdx][mIdx];
-    document.getElementById('score-modal-title').innerText = `${match.p1.name} vs ${match.p2.name}`;
+
+    let p1Name = match.p1 ? match.p1.name : 'TBD';
+    let p2Name = match.p2 ? match.p2.name : 'TBD';
+    
+    document.getElementById('score-modal-title').innerText = `${p1Name} vs ${p2Name}`;
 
     let existing = match.scores && match.scores !== 'BYE' ? match.scores.split(',').map(s => s.split('-')) : [];
     
     let bodyHtml = `<div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:bold; color:var(--uha-blue);">
-        <div style="flex:1; text-align:left;">${match.p1.name}</div>
-        <div style="flex:1; text-align:right;">${match.p2.name}</div>
+        <div style="flex:1; text-align:left;">${p1Name}</div>
+        <div style="flex:1; text-align:right;">${p2Name}</div>
     </div>`;
 
     for(let i=0; i<3; i++) {
@@ -1002,8 +1024,12 @@ window.closeScoreModal = function() {
 window.saveScore = function() {
     const { divIdx, rIdx, mIdx, bType } = currentScoreContext;
     const div = lockedDivisions[divIdx];
+
+    let targetBracket = div.bracket;
+    if (bType === 'finals') targetBracket = div.finalsBracket;
+    else if (bType === 'losers') targetBracket = div.losersBracket;
+    else if (bType === 'third_place') targetBracket = div.thirdPlaceMatch;
     
-    const targetBracket = bType === 'finals' ? div.finalsBracket : (bType === 'losers' ? div.losersBracket : div.bracket);
     const match = targetBracket[rIdx][mIdx];
 
     const p1Inputs = document.querySelectorAll('.p1-score');
@@ -1026,7 +1052,7 @@ window.saveScore = function() {
     if (scoreStrings.length === 0) return alert("Please enter at least one game score.");
     if (p1Wins === p2Wins) return alert("Match cannot end in a tie.");
 
-    if (match.winner && (div.format === 'single_elim' || div.format === 'double_elim')) {
+    if (match.winner && (div.format === 'single_elim' || div.format === 'double_elim') && bType !== 'third_place') {
         let nextRIdx = rIdx + 1;
         let nextMIdx = (bType === 'losers' && rIdx % 2 === 0) ? mIdx : Math.floor(mIdx / 2);
 
@@ -1035,6 +1061,15 @@ window.saveScore = function() {
             if (nextMatch.winner) {
                 if(!confirm("Warning: Changing this score will erase the bracket forward. Continue?")) return;
                 wipeForwardBracket(divIdx, rIdx, mIdx, bType);
+            }
+        }
+
+        if (bType === 'winners' && div.format === 'single_elim' && div.hasThirdPlaceMatch) {
+            if (rIdx === div.bracket.length - 2 && div.thirdPlaceMatch && div.thirdPlaceMatch[0][0].winner) {
+                div.thirdPlaceMatch[0][0].scores = '';
+                div.thirdPlaceMatch[0][0].p1Wins = 0;
+                div.thirdPlaceMatch[0][0].p2Wins = 0;
+                div.thirdPlaceMatch[0][0].winner = null;
             }
         }
     }
@@ -1083,7 +1118,20 @@ window.saveScore = function() {
     .catch(e => console.error("Pending queue error:", e));
 
     try {
-        progressBracket(divIdx, rIdx, mIdx);
+        if (bType !== 'third_place') {
+            progressBracket(divIdx, rIdx, mIdx);
+        }
+
+        if (bType === 'winners' && div.format === 'single_elim' && div.hasThirdPlaceMatch && div.thirdPlaceMatch) {
+            let totalRounds = div.bracket.length;
+            if (rIdx === totalRounds - 2) { // It's a semifinal match
+                if (mIdx % 2 === 0) {
+                    div.thirdPlaceMatch[0][0].p1 = losingTeam; // Route top semi loser
+                } else {
+                    div.thirdPlaceMatch[0][0].p2 = losingTeam; // Route bottom semi loser
+                }
+            }
+        }
 
     } catch (err) {
         console.error("Auto-advance failed, but saving score anyway:", err);
