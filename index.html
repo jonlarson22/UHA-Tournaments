@@ -59,15 +59,24 @@
 
                 <input type="text" id="division-name" placeholder="Enter Division Name" class="uha-input" style="margin-bottom: 15px; width: 100%;">
                                                 
-                    <div id="multi-group-settings" style="display:none; background: #111; padding: 10px; border: 1px solid #333; margin-bottom: 15px;">
-                        <div style="font-size: 12px; color: var(--uha-gold); margin-bottom: 5px;">Group Settings</div>
-                        <input type="number" id="num-groups" placeholder="# of Groups" class="uha-input" style="width: 45%; display: inline-block;">
-                        <select id="multi-group-advancement" class="uha-input" style="width: 45%; display: inline-block;">
-                            <option value="all_to_single">Everyone to Single Bracket</option>
-                            <option value="single_bracket">Top 2 to Championship Bracket</option>
-                            <option value="split_bracket">Top 2 to Winners, Rest to Consolation</option>
-                        </select>
+                    <div id="multi-group-settings" style="display:none; background: #111; padding: 15px; border-radius: 5px; border: 1px solid #333; margin-bottom: 20px; border-left: 3px solid var(--uha-gold);">
+                        <div style="font-size: 12px; color: var(--uha-gold); margin-bottom: 5px; text-transform: uppercase; font-weight: bold;">Group & Playoff Settings</div>
+                        
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <input type="number" id="num-groups" placeholder="# of Groups" class="uha-input" style="flex: 1; margin-bottom: 0;">
+                            <select id="multi-group-advancement" class="uha-input" style="flex: 2; margin-bottom: 0;">
+                                <option value="all_to_single">Everyone to Single Bracket</option>
+                                <option value="single_bracket">Top 2 to Championship Bracket</option>
+                                <option value="split_bracket">Top 2 to Winners, Rest to Consolation</option>
+                            </select>
+                        </div>
+                    
+                        <div style="display: flex; align-items: center; gap: 10px; border-top: 1px solid #333; padding-top: 10px;">
+                            <input type="checkbox" id="multi-group-third-place" style="width: 18px; height: 18px; margin: 0; cursor: pointer;">
+                            <label for="multi-group-third-place" style="font-size: 14px; color: var(--text-light); cursor: pointer;">Generate 3rd Place Match in Knockout(s)</label>
+                        </div>
                     </div>
+                
                 <button id="btn-lock-division" class="uha-btn uha-btn-gold" style="margin-top: 5px;">Lock Division</button>
                 
                 <div id="locked-divisions-list" style="margin-top: 10px; font-size: 14px; color: var(--uha-blue);"></div>
